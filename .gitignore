@@ -7,6 +7,9 @@ build/
 
 # environment variables (IMPORTANT)
 .env
+.env.production
+.env.development
+.env.local
 
 
 # OS files

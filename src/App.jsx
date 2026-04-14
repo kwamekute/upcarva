@@ -43,31 +43,45 @@ export default function App() {
   const [checkingProfile, setCheckingProfile] = useState(false)
 
   const checkProfile = async (userId) => {
-    setCheckingProfile(true)
-     console.log("Checking profile for:", userId)
-    const { data } = await supabase
+  setCheckingProfile(true)
+  console.log("Checking profile for:", userId)
+  
+  try {
+    const { data, error } = await supabase
       .from("profiles")
       .select("id")
       .eq("auth_id", userId)
       .maybeSingle()
+    
+    console.log("Profile result:", { data, error })
     setProfileReady(!!data)
+  } catch (err) {
+    console.error("checkProfile failed:", err)
+    setProfileReady(false)
+  } finally {
     setCheckingProfile(false)
   }
+}
 
-  useEffect(() => {
-    // onAuthStateChange handles everything including initial session
-    const { data: listener } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      console.log("AUTH EVENT:", _event, session)
+
+useEffect(() => {
+  const { data: listener } = supabase.auth.onAuthStateChange(
+    (_event, session) => {
       setSession(session ?? null)
-      if (session?.user) {
-        await checkProfile(session.user.id)
-      } else {
-        setProfileReady(false)
-      }
-    })
+    }
+  )
 
-    return () => listener.subscription.unsubscribe()
-  }, [])
+  return () => {
+    listener.subscription.unsubscribe()
+  }
+}, [])
+
+useEffect(() => {
+  if (!session) return
+
+  checkProfile(session.user.id)
+}, [session])
+
   useEffect(() => {
   console.log("STATE:", { session, checkingProfile, profileReady })
 }, [session, checkingProfile, profileReady])

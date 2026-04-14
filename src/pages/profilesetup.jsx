@@ -10,39 +10,40 @@ export default function ProfileSetup({ onComplete }) {
   const [goal, setGoal] = useState("")
   const [fitnessHistory, setFitnessHistory] = useState("")
   const [activityLevel, setActivityLevel] = useState("")
+const handleSave = async () => {
+  const { data: userData, error: userError } = await supabase.auth.getUser()
+  if (userError || !userData?.user) return
 
-  const handleSave = async () => {
-    const { data: userData, error: userError } = await supabase.auth.getUser()
+  const user = userData.user
 
-    if (userError || !userData?.user) {
-      console.error("User not found", userError)
-      return
-    }
-
-    const user = userData.user
-
-    const { error } = await supabase
-  .from("profiles")
-  .update({
-    name,
-    age: age ? parseInt(age) : null,
-    sex,
-    height_cm: height ? parseFloat(height) : null,
-    starting_weight_kg: startingWeight ? parseFloat(startingWeight) : null,
-    goals: goal,
-    fitness_history: fitnessHistory,
-    activity_level: activityLevel,
-  })
-  .eq("auth_id", user.id)
-
-    if (error) {
-      console.error("Insert failed:", error)
-      alert("Something went wrong. Try again.")
-      return
-    }
-
-    onComplete()
+  // validate required fields first, before hitting DB
+  if (!name || !age || !sex || !height || !startingWeight || !goal || !fitnessHistory || !activityLevel) {
+    alert("Please fill in all fields before continuing.")
+    return
   }
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({
+      name,
+      age: parseInt(age),
+      sex,
+      height_cm: parseFloat(height),
+      starting_weight_kg: parseFloat(startingWeight),
+      goals: goal,
+      fitness_history: fitnessHistory,
+      activity_level: activityLevel,
+    })
+    .eq("auth_id", user.id)
+
+  if (error) {
+    console.error("Update failed:", error)
+    alert("Something went wrong. Try again.")
+    return
+  }
+
+  onComplete()
+}
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4">

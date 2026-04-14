@@ -31,14 +31,14 @@ export default function Auth() {
 
       if (!user) throw new Error("No user returned")
          console.log("5️⃣ BEFORE PROFILE INSERT")
-      // const { error: profileError } = await supabase
-      //   .from("profiles")
-      //   .insert([{ auth_id: user.id }])
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .insert([{ auth_id: user.id }])
 
-      //     console.log("6️⃣ AFTER PROFILE INSERT", profileError)
+          console.log("6️⃣ AFTER PROFILE INSERT", profileError)
 
 
-      // if (profileError) throw profileError
+      if (profileError) throw profileError
 
      console.log("7️⃣ BEFORE NAVIGATE")
 

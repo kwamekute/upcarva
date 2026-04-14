@@ -5,26 +5,17 @@ export default function Progress() {
   const [logs, setLogs] = useState([])
   const [streak, setStreak] = useState(0)
   const [challengeDays, setChallengeDays] = useState(0)
-   const [user, setUser] = useState(null)
+ 
+  
+   const fetchLogs = async () => {
+    const { data: authData } = await supabase.auth.getUser()
+    const user = authData?.user
+    if (!user) return
 
-  // 🔥 GET USER FIRST
-  useEffect(() => {
-    const getUser = async () => {
-      const { data } = await supabase.auth.getUser()
-
-      if (!data.user) return
-
-      setUser(data.user)
-    }
-
-    getUser()
-  }, [])
-  // 🔥 FETCH USER DATA ONLY
-  const fetchLogs = async () => {
     const { data, error } = await supabase
       .from("meals")
       .select("log_date")
-       .eq("auth_id", user.id)
+      .eq("auth_id", user.id)
 
     if (error) {
       console.error(error)
@@ -38,21 +29,14 @@ export default function Progress() {
       return
     }
 
-    // 🔥 unique days
     const uniqueDays = [...new Set(data.map(d => d.log_date))].sort()
-
     setLogs(uniqueDays)
     setChallengeDays(uniqueDays.length)
-
     calculateStreak(uniqueDays)
   }
 
-  // 🔥 STREAK LOGIC (UNCHANGED BUT CLEAN)
   const calculateStreak = (datesArray) => {
-    if (!datesArray.length) {
-      setStreak(0)
-      return
-    }
+    if (!datesArray.length) { setStreak(0); return }
 
     const today = new Date().toISOString().split("T")[0]
     const sorted = [...datesArray].sort().reverse()
@@ -66,7 +50,6 @@ export default function Progress() {
 
     while (true) {
       const check = current.toISOString().split("T")[0]
-
       if (sorted.includes(check)) {
         count++
         current.setDate(current.getDate() - 1)
@@ -78,7 +61,6 @@ export default function Progress() {
     setStreak(count)
   }
 
-  // 🔥 WEEK VIEW (FIXED + CLEAN)
   const getWeekData = () => {
     const today = new Date()
     const week = []
@@ -86,9 +68,7 @@ export default function Progress() {
     for (let i = 6; i >= 0; i--) {
       const d = new Date(today)
       d.setDate(today.getDate() - i)
-
       const dateStr = d.toISOString().split("T")[0]
-
       week.push({
         day: d.toLocaleDateString("en-US", { weekday: "short" }),
         date: dateStr,
@@ -101,9 +81,9 @@ export default function Progress() {
 
   useEffect(() => {
     fetchLogs()
-  })
+  }, []) // ← fixed, was causing infinite loop
 
-  const week = getWeekData()
+   const week = getWeekData()
   const total = week.filter(d => d.logged).length
 
   return (

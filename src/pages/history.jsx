@@ -19,11 +19,7 @@ export default function History() {
   }, [])
 
   const fetchMeals = async () => {
-    // const { data, error } = await supabase
-    //   .from("meals")
-    //   .select("*")
-    //   .eq("auth_id", user.id)
-    //   .order("created_at", { ascending: false })
+   
     const { data: authData } = await supabase.auth.getUser()
   const user = authData?.user
   if (!user) return
@@ -63,7 +59,7 @@ export default function History() {
 
   useEffect(() => {
     fetchMeals()
-  })
+  }, [])
 
   return (
     <div className="min-h-screen bg-[#f5f6fa] px-4 py-6">
