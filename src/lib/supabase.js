@@ -6,15 +6,8 @@ const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 console.log("SUPABASE URL:", supabaseUrl)
 console.log("SUPABASE KEY:", supabaseKey)
 
+console.log("ENV:", import.meta.env.VITE_SUPABASE_URL)
 
-// export const supabase = createClient(supabaseUrl, supabaseKey, {
-//   auth: {
-//     persistSession: true,
-//     autoRefreshToken: true,
-//     detectSessionInUrl: true,
-//     //lock: null
-//   }
-// })
 
 if (!window._supabase) {
   window._supabase = createClient(supabaseUrl, supabaseKey, {

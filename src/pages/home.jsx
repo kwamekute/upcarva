@@ -11,19 +11,6 @@ export default function Home() {
   const navigate = useNavigate()
   const today = new Date().toISOString().split("T")[0]
 
-  // const fetchMeals = async () => {
-  //   const { data, error } = await supabase
-  //     .from("meals")
-  //     .select("*")
-  //     .eq("log_date", today)
-  //     .eq("auth_id", userData.user.id)
-  //     .order("created_at", { ascending: true })
-  //     console.log(data)
-
-  //   if (error) { console.error(error); return }
-  //   setMeals(data || [])
-  //   setHasLoggedToday(!!data?.length)
-  // }
   const fetchMeals = async () => {
   const { data: authData } = await supabase.auth.getUser()
 
@@ -46,20 +33,6 @@ export default function Home() {
   setHasLoggedToday(!!data?.length)
 }
 
-  // const fetchProfile = async () => {
-  //   const { data: userData } = await supabase.auth.getUser()
-  
-  //   if (!userData?.user) return
-
-  //   const { data } = await supabase
-  //     .from("profiles")
-  //     .select("*")
-  //     .eq("auth_id", userData.user.id)
-  //     .maybeSingle()
-
-  //   setProfile(data)
-  //   console.log(userData);
-  // }
   const fetchProfile = async () => {
   const { data } = await supabase.auth.getUser()
 
@@ -115,7 +88,7 @@ export default function Home() {
 
         {!hasLoggedToday && state === "normal" && (
           <div className="bg-yellow-100 text-yellow-700 px-3 py-2 rounded-lg text-sm mb-4">
-            You haven't logged today
+            You haven't logged today, {profile?.name || "friend"}.
           </div>
         )}
 
