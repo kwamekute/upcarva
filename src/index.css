@@ -1,0 +1,57 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+
+.nav {
+    padding: 0 20px;
+}
+
+@layer base {
+    h1 {
+        @apply text-3xl font-bold;
+    }
+}
+
+@layer components {
+
+    .button {
+        @apply border border-black h-10 w-24 rounded-md;
+    }
+
+    .form-grid {
+        @apply grid grid-cols-1 gap-4 w-full;
+    }
+
+    .form-field {
+        @apply col-span-1 flex flex-col text-sm font-medium text-gray-700;
+    }
+
+    .form-label {
+        @apply mb-1;
+    }
+
+    .form-input {
+        @apply p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500;
+    }
+
+    .form-section {
+        @apply bg-white p-6 shadow-md rounded-lg;
+    }
+}
+
+@layer utilities {
+    .border-red {
+        @apply border border-red-400;
+    }
+
+    .icon-flex {
+        @apply flex gap-2 items-center
+    }
+}
