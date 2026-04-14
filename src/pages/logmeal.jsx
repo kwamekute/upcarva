@@ -113,7 +113,7 @@ export default function LogMeal() {
               background: "linear-gradient(135deg, #6a5cff, #ff7a18)"
             }}
           >
-            Tap to Speak
+            Tap to Speak (coming soon)
           </button>
 
           <hr className="my-4" />
@@ -138,14 +138,14 @@ export default function LogMeal() {
             </h2>
 
             <input
-              placeholder="Food"
+              placeholder="Food & Quantity e.g(about half plate of rice..."
               value={text}
               onChange={(e) => setText(e.target.value)}
               className="w-full mb-3 p-2 border rounded-md"
             />
 
             <textarea
-              placeholder="Reason / Context"
+              placeholder="Reason / Context e.g (hungry, bored, craving, stressed.."
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               className="w-full mb-3 p-2 border rounded-md"
