@@ -1,6 +1,17 @@
 import { useProfileSetup } from "../hooks/useProfileSetup"
 
 export default function ProfileSetup() {
+  const {
+    name, setName,
+    age, setAge,
+    sex, setSex,
+    height, setHeight,
+    startingWeight, setStartingWeight,
+    goal, setGoal,
+    fitnessHistory, setFitnessHistory,
+    activityLevel, setActivityLevel,
+    handleSave,
+  } = useProfileSetup()
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4">
