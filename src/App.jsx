@@ -22,7 +22,7 @@ function AppInner() {
     )
   }
 
-  if (!profile) {
+  if (!profile || !profile.name || !profile.age || !profile.sex || !profile.height_cm || !profile.starting_weight_kg || !profile.goals) {
     return (
       <div style={{ maxWidth: "480px", margin: "0 auto" }}>
         <Routes>

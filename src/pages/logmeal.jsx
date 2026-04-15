@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react"
 import { supabase } from "../lib/supabase"
 import { useNavigate } from "react-router-dom"
+import { useData } from "../contexts/DataContext"
 
 export default function LogMeal() {
-  const [meals, setMeals] = useState([])
+  const { refetch } = useData()
   const [text, setText] = useState("")
   const [reason, setReason] = useState("")
   const [cost, setCost] = useState("")
@@ -29,28 +30,6 @@ export default function LogMeal() {
     getUser()
   }, [])
 
-  // 🔥 FETCH MEALS ONLY AFTER USER EXISTS
-  useEffect(() => {
-    if (!user) return
-
-    fetchMeals()
-  }, [user])
-
-  const fetchMeals = async () => {
-    const { data, error } = await supabase
-      .from("meals")
-      .select("*")
-      .eq("auth_id", user.id) // ✅ filter by user
-      .order("created_at", { ascending: false })
-
-    if (error) {
-      console.error(error)
-      return
-    }
-
-    setMeals(data || [])
-  }
-
   // ✅ ADD MEAL (linked to user)
   const addMeal = async () => {
     if (!text || !user) return
@@ -73,7 +52,7 @@ export default function LogMeal() {
     setText("")
     setReason("")
     setCost("")
-    fetchMeals()
+    await refetch()
      
      // ✅ SUCCESS → go home
   navigate("/")
