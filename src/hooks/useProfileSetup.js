@@ -1,7 +1,9 @@
 import { useState } from "react"
 import { supabase } from "../lib/supabase"
+import { useData } from "../contexts/DataContext"
 
-export function useProfileSetup(onComplete) {
+export function useProfileSetup() {
+  const { refetch } = useData()
   const [name, setName] = useState("")
   const [age, setAge] = useState("")
   const [sex, setSex] = useState("")
@@ -42,7 +44,7 @@ export function useProfileSetup(onComplete) {
       return
     }
 
-    onComplete()
+    refetch()
   }
 
   return {

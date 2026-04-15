@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom"
 import { useAuth } from "./hooks/useAuth"
-import { useProfile } from "./hooks/useProfile"
+import { useData } from "./contexts/DataContext"
 
 import Home from "./pages/home"
 import LogMeal from "./pages/logmeal"
@@ -9,13 +9,24 @@ import History from "./pages/history"
 import Layout from "./components/layout"
 import Auth from "./pages/auth"
 import ProfileSetup from "./pages/profilesetup"
+import { DataProvider } from "./contexts/DataContext"
 
-function AppInner({ profileReady, onProfileComplete }) {
-  if (!profileReady) {
+function AppInner() {
+  const { profile, loading } = useData()
+
+  if (loading) {
+    return (
+      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <p style={{ color: "#999", fontSize: "14px" }}>Loading data...</p>
+      </div>
+    )
+  }
+
+  if (!profile) {
     return (
       <div style={{ maxWidth: "480px", margin: "0 auto" }}>
         <Routes>
-          <Route path="/setup" element={<ProfileSetup onComplete={onProfileComplete} />} />
+          <Route path="/setup" element={<ProfileSetup />} />
           <Route path="*" element={<Navigate to="/setup" replace />} />
         </Routes>
       </div>
@@ -39,9 +50,8 @@ function AppInner({ profileReady, onProfileComplete }) {
 
 export default function App() {
   const { session } = useAuth()
-  const { profileReady, setProfileReady, checkingProfile } = useProfile(session)
 
-  if (session === undefined || checkingProfile) {
+  if (session === undefined) {
     return (
       <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
         <p style={{ color: "#999", fontSize: "14px" }}>Loading...</p>
@@ -54,10 +64,9 @@ export default function App() {
       {!session ? (
         <Auth />
       ) : (
-        <AppInner
-          profileReady={profileReady}
-          onProfileComplete={() => setProfileReady(true)}
-        />
+        <DataProvider session={session}>
+          <AppInner />
+        </DataProvider>
       )}
     </BrowserRouter>
   )
