@@ -1,12 +1,15 @@
 import { useNavigate } from "react-router-dom"
 import { useUserProfile } from "../hooks/useUserProfile"
 import { useTodayMeals } from "../hooks/useTodayMeals"
+import { useMealLogs } from "../hooks/useMealLogs"
+import StreakCard from "../components/StreakCard"
 import logo from "../assets/logo.png"
 
 export default function Home() {
   const navigate = useNavigate()
   const { profile } = useUserProfile()
   const { meals, hasLoggedToday } = useTodayMeals()
+  const { streak, isStreakAtRisk, logs } = useMealLogs()
 
   const getState = () => {
     const hour = new Date().getHours()
@@ -31,23 +34,13 @@ export default function Home() {
           <img src={logo} alt="Upcurva" className="h-20" />
         </div>
 
-        {!hasLoggedToday && state === "danger" && (
-          <div className="bg-red-100 text-red-600 px-3 py-2 rounded-lg text-sm mb-4 animate-pulse">
-            ⚠️ Don't break your streak, {profile?.name || "friend"}.
-          </div>
-        )}
-
-        {!hasLoggedToday && state === "normal" && (
-          <div className="bg-yellow-100 text-yellow-700 px-3 py-2 rounded-lg text-sm mb-4">
-            You haven't logged today, {profile?.name || "friend"}.
-          </div>
-        )}
-
-        {hasLoggedToday && (
-          <div className="bg-green-100 text-green-700 px-3 py-2 rounded-lg text-sm mb-4">
-            You showed up today{profile?.name ? `, ${profile.name}` : ""} 🌿
-          </div>
-        )}
+        <StreakCard
+          streak={streak}
+          hasLoggedToday={hasLoggedToday}
+          isStreakAtRisk={isStreakAtRisk}
+          logs={logs}
+          className="mb-4"
+        />
 
         <button
           onClick={() => navigate("/log")}
