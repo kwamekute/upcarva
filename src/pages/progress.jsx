@@ -1,7 +1,10 @@
 import { useMealLogs } from "../hooks/useMealLogs"
+import StreakCard from "../components/StreakCard"
 
 export default function Progress() {
-  const { logs, streak, challengeDays } = useMealLogs()
+  const { logs, streak, challengeDays, isStreakAtRisk } = useMealLogs()
+
+  const today = new Date().toISOString().split("T")[0]
 
   const getWeekData = () => {
     const today = new Date()
@@ -42,10 +45,13 @@ export default function Progress() {
           <p className="text-xs text-gray-500 mt-1">Challenge progress 🚀</p>
         </div>
 
-        <div className="bg-gray-100 rounded-xl p-4 text-center mb-4">
-          <p className="text-2xl font-bold">{streak}</p>
-          <p className="text-sm text-gray-600">day streak 🔥 — keep it alive</p>
-        </div>
+        <StreakCard
+          streak={streak}
+          hasLoggedToday={logs.includes(today)}
+          isStreakAtRisk={isStreakAtRisk}
+          logs={logs}
+          className="mb-4"
+        />
 
         <p className="text-sm text-gray-600 mb-2">
           {total} / 7 days logged — {Math.round((total / 7) * 100)}% this week

@@ -18,6 +18,7 @@ export function DataProvider({ children, session }) {
   const [logs, setLogs] = useState([])
   const [streak, setStreak] = useState(0)
   const [challengeDays, setChallengeDays] = useState(0)
+  const [isStreakAtRisk, setIsStreakAtRisk] = useState(false)
   const [loading, setLoading] = useState(true)
 
   const fetchAllData = async (userId) => {
@@ -67,29 +68,41 @@ export function DataProvider({ children, session }) {
   }
 
   const calculateStreak = (datesArray) => {
-    if (!datesArray.length) { setStreak(0); return }
+    if (!datesArray.length) { 
+      setStreak(0)
+      setIsStreakAtRisk(false)
+      return 
+    }
 
     const today = new Date().toISOString().split("T")[0]
     const sorted = [...datesArray].sort().reverse()
 
     let count = 0
     let current = new Date(today)
+    let missedOne = false
 
-    if (!sorted.includes(today)) {
-      current.setDate(current.getDate() - 1)
-    }
+    // Start from today, walk backwards
+    // Allow one missed day (grace period) before breaking streak
 
-    while (true) {
+    for (let i = 0; i < 365; i++) {
       const check = current.toISOString().split("T")[0]
       if (sorted.includes(check)) {
         count++
+        missedOne = false
         current.setDate(current.getDate() - 1)
       } else {
-        break
+        if (missedOne) break // two misses in a row = streak broken
+        missedOne = true
+        current.setDate(current.getDate() - 1)
       }
     }
 
     setStreak(count)
+
+    // Calculate isStreakAtRisk
+    const currentHour = new Date().getHours()
+    const atRisk = count > 0 && !sorted.includes(today) && currentHour >= 18
+    setIsStreakAtRisk(atRisk)
   }
 
   useEffect(() => {
@@ -138,17 +151,20 @@ export function DataProvider({ children, session }) {
       [date]: [...(prev[date] || []), { description: newMeal.description, reason: newMeal.reason }]
     }))
 
-    // Update logs if new date
-    setLogs(prev => {
-      if (!prev.includes(date)) {
-        return [...prev, date].sort()
+    // Update logs if new date and recalculate derived values
+    setLogs(prevLogs => {
+      const updatedLogs = prevLogs.includes(date) ? prevLogs : [...prevLogs, date].sort()
+      
+      // Update challenge days if new date
+      if (updatedLogs.length > prevLogs.length) {
+        setChallengeDays(prev => prev + 1)
       }
-      return prev
+      
+      // Recalculate streak
+      calculateStreak(updatedLogs)
+      
+      return updatedLogs
     })
-
-    // Recalculate streak and challenge days
-    setChallengeDays(prev => prev + (logs.includes(date) ? 0 : 1))
-    // For streak, we might need to recalculate fully, but for simplicity, refetch if needed
   }
 
   const value = {
@@ -160,7 +176,8 @@ export function DataProvider({ children, session }) {
     challengeDays,
     loading,
     refetch: () => session?.user && fetchAllData(session.user.id),
-    addMealLocally
+    addMealLocally,
+    isStreakAtRisk
   }
 
   return (
