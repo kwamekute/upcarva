@@ -1,10 +1,17 @@
 import { Outlet, Link, useLocation } from "react-router-dom"
+import { motion } from "framer-motion"
 
 export default function Layout() {
   const location = useLocation()
 
   const isActive = (path) =>
-    location.pathname === path ? "text-green-600" : "text-gray-400"
+    location.pathname === path
+
+  const navItems = [
+    { path: "/", label: "Home", icon: "🏠" },
+    { path: "/progress", label: "Progress", icon: "📊" },
+    { path: "/history", label: "History", icon: "📝" }
+  ]
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -15,20 +22,35 @@ export default function Layout() {
       </div>
 
       {/* Bottom Navigation */}
-      <div className="bg-white border-t p-3 flex justify-around">
-
-        <Link to="/" className={isActive("/")}>
-          Home
-        </Link>
-
-        <Link to="/progress" className={isActive("/progress")}>
-          Progress
-        </Link>
-
-        <Link to="/history" className={isActive("/history")}>
-          History
-        </Link>
-
+      <div className="bg-white border-t border-slate-200/50 px-3 py-3 flex justify-around backdrop-blur-sm">
+        {navItems.map((item) => (
+          <Link 
+            key={item.path}
+            to={item.path} 
+            className={`relative flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-colors ${
+              isActive(item.path)
+                ? "text-green-600"
+                : "text-slate-400 hover:text-slate-600"
+            }`}
+          >
+            <motion.span
+              animate={isActive(item.path) ? { scale: [1, 1.15, 1] } : {}}
+              transition={{ duration: 0.5, repeat: Infinity, repeatDelay: 2 }}
+              className="text-lg"
+            >
+              {item.icon}
+            </motion.span>
+            <span className="text-[10px] font-medium">{item.label}</span>
+            {isActive(item.path) && (
+              <motion.div
+                layoutId="nav-indicator"
+                className="absolute bottom-0 left-1/2 -translate-x-1/2 h-0.5 bg-green-600 rounded-full"
+                style={{ width: "24px" }}
+                transition={{ type: "spring", stiffness: 400, damping: 30 }}
+              />
+            )}
+          </Link>
+        ))}
       </div>
     </div>
   )
