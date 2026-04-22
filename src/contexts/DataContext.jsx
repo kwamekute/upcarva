@@ -21,8 +21,8 @@ export function DataProvider({ children, session }) {
   const [isStreakAtRisk, setIsStreakAtRisk] = useState(false)
   const [loading, setLoading] = useState(true)
 
-  const fetchAllData = async (userId) => {
-    setLoading(true)
+  const fetchAllData = async (userId, setSilent = false) => {
+    if (!setSilent) setLoading(true)
     try {
       // Fetch profile
       const { data: profileData } = await supabase
@@ -63,7 +63,7 @@ export function DataProvider({ children, session }) {
     } catch (err) {
       console.error("Error fetching data:", err)
     } finally {
-      setLoading(false)
+      if (!setSilent) setLoading(false)
     }
   }
 
@@ -176,6 +176,7 @@ export function DataProvider({ children, session }) {
     challengeDays,
     loading,
     refetch: () => session?.user && fetchAllData(session.user.id),
+    silentRefetch: () => session?.user && fetchAllData(session.user.id, true),
     addMealLocally,
     isStreakAtRisk
   }

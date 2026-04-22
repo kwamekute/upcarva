@@ -1,212 +1,324 @@
-import { useNavigate } from "react-router-dom"
+import { useEffect, useState } from "react"
+import { AnimatePresence, motion } from "framer-motion"
+
+import { useData } from "../contexts/DataContext"
+import { supabase } from "../lib/supabase"
 import { useUserProfile } from "../hooks/useUserProfile"
 import { useTodayMeals } from "../hooks/useTodayMeals"
 import { useMealLogs } from "../hooks/useMealLogs"
 import StreakCard from "../components/StreakCard"
-import logo from "../assets/logo.png"
+import Toast from "../components/Toast"
 
 export default function Home() {
-  const navigate = useNavigate()
   const { profile } = useUserProfile()
+  const { silentRefetch } = useData()
   const { meals, hasLoggedToday } = useTodayMeals()
-  const { streak, isStreakAtRisk, logs } = useMealLogs()
-
-  const getState = () => {
-    const hour = new Date().getHours()
-    if (hasLoggedToday) return "safe"
-    if (hour >= 18) return "danger"
-    return "normal"
-  }
-
-  const state = getState()
+  const { streak, isStreakAtRisk, logs, challengeDays } = useMealLogs()
+  const [text, setText] = useState("")
+  const [reason, setReason] = useState("")
+  const [cost, setCost] = useState("")
+  const [showModal, setShowModal] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [toastMsg, setToastMsg] = useState("")
+  const [toastVisible, setToastVisible] = useState(false)
 
   const getButtonText = () => {
-    if (state === "danger") return "Don't break your streak 🔥"
-    if (state === "normal") return "What did you eat?"
-    return meals.length > 0 ? "Ate anything else?" : "Log your meal"
+    if (isStreakAtRisk) return "Don't break your streak 🔥"
+    if (meals.length === 0 && streak === 0) return "Start your streak 🔥"
+    if (meals.length === 0 && streak > 0) return "Log today - don't stop now"
+    if (meals.length === 1) return "Add another meal"
+    return "Anything else?"
+  }
+
+  const getButtonStyle = () => {
+    if (isStreakAtRisk) return { background: "#ef4444" }
+    if (meals.length === 0 && streak > 0) return { background: "#f97316" }
+    if (meals.length >= 1) return { background: "#22c55e" }
+    return { background: "var(--grad)" }
+  }
+
+  const closeModal = () => {
+    setShowModal(false)
+    setText("")
+    setReason("")
+    setCost("")
+  }
+
+  const showToast = (msg) => {
+    setToastMsg(msg)
+    setToastVisible(true)
+  }
+
+  useEffect(() => {
+    if (!toastVisible) return
+
+    const timeout = window.setTimeout(() => setToastVisible(false), 1500)
+    return () => window.clearTimeout(timeout)
+  }, [toastVisible])
+
+  const addMeal = async () => {
+    if (!text.trim() || saving) return
+
+    setSaving(true)
+
+    try {
+      const { data } = await supabase.auth.getUser()
+      const user = data?.user
+
+      if (!user) {
+        setSaving(false)
+        return
+      }
+
+      const today = new Date().toISOString().split("T")[0]
+      const { error } = await supabase.from("meals").insert([
+        {
+          auth_id: user.id,
+          description: text,
+          reason,
+          cost: cost ? parseFloat(cost) : null,
+          log_date: today
+        }
+      ])
+
+      if (error) {
+        console.error(error)
+        setSaving(false)
+        return
+      }
+
+      setText("")
+      setReason("")
+      setCost("")
+      silentRefetch()
+      setShowModal(false)
+      setSaving(false)
+      const newMealCount = meals.length + 1
+      if (newMealCount === 1) {
+        showToast(`Day ${streak + 1} started 🔥`)
+      } else if (newMealCount === 2) {
+        showToast("💪 Keep the momentum!")
+      } else if (newMealCount === 3) {
+        showToast("🚀 You're on fire!")
+      } else {
+        showToast(`Logged ✅`)
+      }
+    } catch (error) {
+      console.error(error)
+      setSaving(false)
+    }
   }
 
   return (
-    <div className="min-h-screen bg-[#f5f6fa] px-4 py-6">
-      <div className="max-w-sm mx-auto">
+    <div className="relative min-h-screen overflow-hidden bg-[#f6f7fb] px-4 py-5">
+      <Toast message={toastMsg} visible={toastVisible} />
 
-        <div className="flex justify-center mb-2">
-          <img src={logo} alt="Upcurva" className="h-20" />
-        </div>
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute left-1/2 top-[-120px] h-[260px] w-[260px] -translate-x-1/2 rounded-full bg-[#7c6cff]/12 blur-3xl" />
+        <div className="absolute bottom-10 right-[-40px] h-[180px] w-[180px] rounded-full bg-[#ff8a3d]/12 blur-3xl" />
+      </div>
 
-        <StreakCard
-          streak={streak}
-          hasLoggedToday={hasLoggedToday}
-          isStreakAtRisk={isStreakAtRisk}
-          logs={logs}
-          className="mb-4"
-        />
-
-        <button
-          onClick={() => navigate("/log")}
-          className="w-full text-white py-3 rounded-xl font-medium mb-4"
-          style={{
-            background:
-              state === "danger" ? "#ef4444" :
-              state === "safe"   ? "#22c55e" :
-              "linear-gradient(135deg, #6a5cff, #ff7a18)"
-          }}
+      <div className="relative mx-auto max-w-sm space-y-4">
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.25, ease: "easeOut" }}
+          className="rounded-[24px] border border-white/80 bg-white/75 p-4 shadow-[0_20px_55px_rgba(15,23,42,0.08)] backdrop-blur-xl"
         >
-          {getButtonText()}
-        </button>
+          <div className="flex items-center justify-between">
+            <div>
+              <span
+                className="text-lg font-black tracking-tight"
+                style={{ background: "var(--grad)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}
+              >
+                upcarva
+              </span>
+              <p className="mt-1 text-[11px] text-slate-500">
+                {hasLoggedToday ? `You showed up today${profile?.name ? `, ${profile.name}` : ""}.` : `Keep today moving${profile?.name ? `, ${profile.name}` : ""}.`}
+              </p>
+            </div>
+            <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[10px] text-slate-500">
+              {challengeDays} / 14 days
+            </span>
+          </div>
 
-        <div className="bg-white rounded-xl divide-y">
+          <div className="mt-3 h-[4px] overflow-hidden rounded-full bg-slate-100">
+            <motion.div
+              className="h-full rounded-full"
+              style={{ background: "var(--grad)" }}
+              initial={{ width: 0 }}
+              animate={{ width: `${Math.min((challengeDays / 14) * 100, 100)}%` }}
+              transition={{ duration: 0.8, ease: "easeOut" }}
+            />
+          </div>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.25, ease: "easeOut", delay: 0.05 }}
+        >
+          <StreakCard
+            streak={streak}
+            hasLoggedToday={hasLoggedToday}
+            isStreakAtRisk={isStreakAtRisk}
+            logs={logs}
+          />
+        </motion.div>
+
+        <AnimatePresence mode="wait">
+          {!showModal && (
+            <motion.button
+              key="cta"
+              onClick={() => setShowModal(true)}
+              initial={{ opacity: 0, y: 8, scale: 0.98 }}
+              animate={isStreakAtRisk 
+                ? { opacity: 1, y: 0, scale: 1, x: [0, -3, 3, -2, 2, 0] } 
+                : { opacity: 1, y: 0, scale: 1 }
+              }
+              exit={{ opacity: 0, y: 10, scale: 0.98 }}
+              transition={isStreakAtRisk 
+                ? { duration: 0.4, x: { duration: 0.6, repeat: Infinity, repeatDelay: 2 } }
+                : { duration: 0.24, ease: "easeOut" }
+              }
+              whileTap={{ scale: 0.94 }}
+              whileHover={{ y: -2 }}
+              className="w-full rounded-xl py-3 text-[12px] font-bold text-white shadow-[0_14px_28px_rgba(91,103,255,0.24)] transition-transform active:scale-[0.94]"
+              style={getButtonStyle()}
+            >
+              {getButtonText()}
+            </motion.button>
+          )}
+        </AnimatePresence>
+
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.25, ease: "easeOut", delay: 0.1 }}
+          className="overflow-hidden rounded-2xl border border-white/80 bg-white/70 shadow-[0_18px_48px_rgba(15,23,42,0.07)] backdrop-blur-xl"
+        >
           {meals.length === 0 ? (
-            <p className="p-4 text-center text-gray-400 text-sm">No meals logged yet</p>
+            <p className="py-5 text-center text-[11px] leading-relaxed text-slate-400">
+              Nothing yet. Your first log starts everything.
+            </p>
           ) : (
             meals.map((meal, i) => (
-              <div key={meal.id} className="p-3">
-                <p className="font-medium">Meal {i + 1}</p>
-                <p className="text-sm text-gray-700">{meal.description}</p>
-                <p className="text-xs text-gray-400">
-                  {new Date(meal.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                </p>
-              </div>
+              <motion.div
+                key={meal.id}
+                initial={{ opacity: 0, y: 12, x: -10 }}
+                animate={{ opacity: 1, y: 0, x: 0 }}
+                transition={{ duration: 0.3, ease: "easeOut", delay: i * 0.05 }}
+                whileHover={{ backgroundColor: "rgba(0,0,0,0.015)", x: 2 }}
+                className="flex items-center gap-3 border-b border-slate-100 px-3 py-2.5 last:border-b-0 transition-colors"
+              >
+                <motion.div 
+                  whileHover={{ scale: 1.1 }}
+                  className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-md bg-gradient-to-br from-[#7c6cff]/20 to-[#ff8a3d]/20 text-[9px] font-semibold text-slate-600"
+                >
+                  {i + 1}
+                </motion.div>
+                <div className="min-w-0">
+                  <p className="truncate text-[11px] font-medium text-slate-800">{meal.description}</p>
+                  <p className="mt-0.5 text-[9px] text-slate-400">
+                    {new Date(meal.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                  </p>
+                </div>
+              </motion.div>
             ))
           )}
-        </div>
-
+        </motion.div>
       </div>
+
+      <AnimatePresence>
+        {showModal && (
+          <motion.div
+            key="log-modal"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            className="fixed inset-0 z-40 flex items-center justify-center bg-slate-950/28 px-4 backdrop-blur-[2px]"
+          >
+            <motion.div
+              initial={{ opacity: 0, y: 12, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 12, scale: 0.98 }}
+              transition={{ duration: 0.24, ease: "easeOut" }}
+              className="w-full max-w-sm rounded-[28px] border border-white/80 bg-white/95 p-6 shadow-[0_24px_80px_rgba(15,23,42,0.18)]"
+            >
+              <div className="mb-5 flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-[10px] uppercase tracking-[0.24em] text-slate-400">Log meal</p>
+                  <h2 className="mt-1 text-lg font-semibold text-slate-800">Nice. Let&apos;s log it.</h2>
+                </div>
+                <div
+                  className="flex h-11 w-11 items-center justify-center rounded-2xl text-xl text-white shadow-[0_12px_28px_rgba(91,103,255,0.28)]"
+                  style={{ background: "var(--grad)" }}
+                >
+                  🍽️
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <div>
+                  <label className="mb-1.5 block text-[11px] font-medium text-slate-600">
+                    Food &amp; Quantity
+                  </label>
+                  <input
+                    autoFocus
+                    placeholder="Food & Quantity e.g(about half plate of rice..."
+                    value={text}
+                    onChange={(e) => setText(e.target.value)}
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50/80 px-3 py-2.5 text-[12px] text-slate-800 outline-none transition focus:border-[#7c6cff]/40 focus:bg-white"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-1.5 block text-[11px] font-medium text-slate-600">
+                    Reason / Context
+                  </label>
+                  <textarea
+                    placeholder="Reason / Context e.g (hungry, bored, craving, stressed.."
+                    value={reason}
+                    onChange={(e) => setReason(e.target.value)}
+                    className="h-24 w-full resize-none rounded-xl border border-slate-200 bg-slate-50/80 px-3 py-2.5 text-[12px] text-slate-800 outline-none transition focus:border-[#7c6cff]/40 focus:bg-white"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-1.5 block text-[11px] font-medium text-slate-600">
+                    Cost (optional)
+                  </label>
+                  <input
+                    placeholder="Cost (optional)"
+                    value={cost}
+                    onChange={(e) => setCost(e.target.value)}
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50/80 px-3 py-2.5 text-[12px] text-slate-800 outline-none transition focus:border-[#7c6cff]/40 focus:bg-white"
+                  />
+                </div>
+              </div>
+
+              <div className="mt-5 flex gap-2">
+                <button
+                  onClick={closeModal}
+                  className="flex-1 rounded-xl border border-slate-200 py-2.5 text-[11px] font-medium text-slate-500 transition hover:bg-slate-50"
+                >
+                  Cancel
+                </button>
+                <motion.button
+                  onClick={addMeal}
+                  whileTap={{ scale: 0.98 }}
+                  disabled={!text.trim() || saving}
+                  className="flex-[1.5] rounded-xl py-2.5 text-[11px] font-semibold text-white disabled:opacity-40"
+                  style={{ background: "var(--grad)" }}
+                >
+                  {saving ? "Saving..." : "Save Meal"}
+                </motion.button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
-// import { useEffect, useState } from "react"
-// import { useNavigate } from "react-router-dom"
-// import { supabase } from "../lib/supabase"
-// import logo from "../assets/logo.png"
-
-// export default function Home() {
-//   const [meals, setMeals] = useState([])
-//   const [hasLoggedToday, setHasLoggedToday] = useState(false)
-//   const [profile, setProfile] = useState(null)
-
-//   const navigate = useNavigate()
-//   const today = new Date().toISOString().split("T")[0]
-
-//   const fetchMeals = async () => {
-//   const { data: authData } = await supabase.auth.getUser()
-
-//   const user = authData?.user
-//   if (!user) return
-
-//   const { data, error } = await supabase
-//     .from("meals")
-//     .select("*")
-//     .eq("log_date", today)
-//     .eq("auth_id", user.id)
-//     .order("created_at", { ascending: true })
-
-//   if (error) {
-//     console.error(error)
-//     return
-//   }
-
-//   setMeals(data || [])
-//   setHasLoggedToday(!!data?.length)
-// }
-
-//   const fetchProfile = async () => {
-//   const { data } = await supabase.auth.getUser()
-
-//   const user = data?.user
-//   if (!user) return
-
-//   const { data: profile } = await supabase
-//     .from("profiles")
-//     .select("*")
-//     .eq("auth_id", user.id)
-//     .maybeSingle()
-
-//   setProfile(profile)
-// }
-
-//   useEffect(() => {
-//     fetchMeals()
-//     fetchProfile()
-
-//     const handleFocus = () => fetchMeals()
-//     window.addEventListener("focus", handleFocus)
-//     return () => window.removeEventListener("focus", handleFocus)
-//   }, [])
-
-//   const getState = () => {
-//     const hour = new Date().getHours()
-//     if (hasLoggedToday) return "safe"
-//     if (hour >= 18) return "danger"
-//     return "normal"
-//   }
-
-//   const state = getState()
-
-//   const getButtonText = () => {
-//     if (state === "danger") return "Don't break your streak 🔥"
-//     if (state === "normal") return "What did you eat?"
-//     return meals.length > 0 ? "Ate anything else?" : "Log your meal"
-//   }
-
-//   return (
-//     <div className="min-h-screen bg-[#f5f6fa] px-4 py-6">
-//       <div className="max-w-sm mx-auto">
-
-//         <div className="flex justify-center mb-2">
-//           <img src={logo} alt="Upcurva" className="h-20" />
-//         </div>
-
-//         {!hasLoggedToday && state === "danger" && (
-//           <div className="bg-red-100 text-red-600 px-3 py-2 rounded-lg text-sm mb-4 animate-pulse">
-//             ⚠️ Don't break your streak, {profile?.name || "friend"}.
-//           </div>
-//         )}
-
-//         {!hasLoggedToday && state === "normal" && (
-//           <div className="bg-yellow-100 text-yellow-700 px-3 py-2 rounded-lg text-sm mb-4">
-//             You haven't logged today, {profile?.name || "friend"}.
-//           </div>
-//         )}
-
-//         {hasLoggedToday && (
-//           <div className="bg-green-100 text-green-700 px-3 py-2 rounded-lg text-sm mb-4">
-//             You showed up today{profile?.name ? `, ${profile.name}` : ""} 🌿
-//           </div>
-//         )}
-
-//         <button
-//           onClick={() => navigate("/log")}
-//           className="w-full text-white py-3 rounded-xl font-medium mb-4"
-//           style={{
-//             background:
-//               state === "danger"
-//                 ? "#ef4444"
-//                 : state === "safe"
-//                 ? "#22c55e"
-//                 : "linear-gradient(135deg, #6a5cff, #ff7a18)"
-//           }}
-//         >
-//           {getButtonText()}
-//         </button>
-
-//         <div className="bg-white rounded-xl divide-y">
-//           {meals.length === 0 ? (
-//             <p className="p-4 text-center text-gray-400 text-sm">No meals logged yet</p>
-//           ) : (
-//             meals.map((meal, i) => (
-//               <div key={meal.id} className="p-3">
-//                 <p className="font-medium">Meal {i + 1}</p>
-//                 <p className="text-sm text-gray-700">{meal.description}</p>
-//                 <p className="text-xs text-gray-400">
-//                   {new Date(meal.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-//                 </p>
-//               </div>
-//             ))
-//           )}
-//         </div>
-
-//       </div>
-//     </div>
-//   )
-// }
