@@ -15,7 +15,8 @@ export default function Home() {
   const { meals, hasLoggedToday } = useTodayMeals()
   const { streak, isStreakAtRisk, logs, challengeDays } = useMealLogs()
   const [text, setText] = useState("")
-  const [reason, setReason] = useState("")
+  const [hungerLevel, setHungerLevel] = useState(null)
+  const [triggerType, setTriggerType] = useState(null)
   const [cost, setCost] = useState("")
   const [showModal, setShowModal] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -40,7 +41,8 @@ export default function Home() {
   const closeModal = () => {
     setShowModal(false)
     setText("")
-    setReason("")
+    setHungerLevel(null)
+    setTriggerType(null)
     setCost("")
   }
 
@@ -56,8 +58,17 @@ export default function Home() {
     return () => window.clearTimeout(timeout)
   }, [toastVisible])
 
+  // Auto-select 'hunger' trigger when hunger level is 3
+  useEffect(() => {
+    if (hungerLevel === 3 && triggerType === null) {
+      setTriggerType("hunger")
+    } else if (hungerLevel !== 3 && triggerType === "hunger") {
+      setTriggerType(null)
+    }
+  }, [hungerLevel, triggerType])
+
   const addMeal = async () => {
-    if (!text.trim() || saving) return
+    if (!text.trim() || hungerLevel === null || saving) return
 
     setSaving(true)
 
@@ -75,7 +86,8 @@ export default function Home() {
         {
           auth_id: user.id,
           description: text,
-          reason,
+          hunger_level: hungerLevel,
+          trigger_type: triggerType,
           cost: cost ? parseFloat(cost) : null,
           log_date: today
         }
@@ -88,7 +100,8 @@ export default function Home() {
       }
 
       setText("")
-      setReason("")
+      setHungerLevel(null)
+      setTriggerType(null)
       setCost("")
       silentRefetch()
       setShowModal(false)
@@ -274,16 +287,68 @@ export default function Home() {
                 </div>
 
                 <div>
-                  <label className="mb-1.5 block text-[11px] font-medium text-slate-600">
-                    Reason / Context
+                  <label className="mb-2 block text-[11px] font-medium text-slate-600">
+                    Hunger Level
                   </label>
-                  <textarea
-                    placeholder="Reason / Context e.g (hungry, bored, craving, stressed.."
-                    value={reason}
-                    onChange={(e) => setReason(e.target.value)}
-                    className="h-24 w-full resize-none rounded-xl border border-slate-200 bg-slate-50/80 px-3 py-2.5 text-[12px] text-slate-800 outline-none transition focus:border-[#7c6cff]/40 focus:bg-white"
-                  />
+                  <div className="grid grid-cols-4 gap-2">
+                    {[
+                      { level: 0, emoji: "😐", label: "Not" },
+                      { level: 1, emoji: "🙂", label: "Bit" },
+                      { level: 2, emoji: "😋", label: "Yes" },
+                      { level: 3, emoji: "🔥", label: "Starving" }
+                    ].map((item) => (
+                      <motion.button
+                        key={item.level}
+                        onClick={() => setHungerLevel(item.level)}
+                        whileTap={{ scale: 0.95 }}
+                        className={`rounded-lg border-2 py-2.5 text-center transition-all ${
+                          hungerLevel === item.level
+                            ? "border-indigo-300 bg-indigo-50 ring-2 ring-indigo-200"
+                            : "border-slate-200 bg-slate-50 text-slate-400 hover:border-slate-300"
+                        }`}
+                      >
+                        <div className="text-lg">{item.emoji}</div>
+                        <div className="mt-1 text-[9px] font-medium">{item.label}</div>
+                      </motion.button>
+                    ))}
+                  </div>
                 </div>
+
+                {hungerLevel !== null && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.2, ease: "easeOut" }}
+                  >
+                    <label className="mb-2 block text-[11px] font-medium text-slate-600">
+                      What triggered you?
+                    </label>
+                    <div className="flex flex-wrap gap-1.5">
+                      {[
+                        { type: "hunger", emoji: "🍽️", label: "Hunger" },
+                        { type: "bored", emoji: "😐", label: "Bored" },
+                        { type: "stressed", emoji: "😣", label: "Stressed" },
+                        { type: "good_mood", emoji: "😊", label: "Good Mood" },
+                        { type: "social", emoji: "👥", label: "Social" },
+                        { type: "habit", emoji: "🔁", label: "Habit" },
+                        { type: "craving", emoji: "😋", label: "Craving" }
+                      ].map((item) => (
+                        <motion.button
+                          key={item.type}
+                          onClick={() => setTriggerType(triggerType === item.type ? null : item.type)}
+                          whileTap={{ scale: 0.95 }}
+                          className={`rounded-lg border px-2 py-1.5 text-[10px] font-medium transition-all ${
+                            triggerType === item.type
+                              ? "border-orange-300 bg-orange-50 text-orange-700 ring-1 ring-orange-200"
+                              : "border-slate-200 bg-slate-50 text-slate-500 hover:border-slate-300"
+                          }`}
+                        >
+                          <span>{item.emoji}</span> <span className="ml-1">{item.label}</span>
+                        </motion.button>
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
 
                 <div>
                   <label className="mb-1.5 block text-[11px] font-medium text-slate-600">
@@ -308,7 +373,7 @@ export default function Home() {
                 <motion.button
                   onClick={addMeal}
                   whileTap={{ scale: 0.98 }}
-                  disabled={!text.trim() || saving}
+                  disabled={!text.trim() || hungerLevel === null || saving}
                   className="flex-[1.5] rounded-xl py-2.5 text-[11px] font-semibold text-white disabled:opacity-40"
                   style={{ background: "var(--grad)" }}
                 >
