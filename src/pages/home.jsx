@@ -60,17 +60,15 @@ export default function Home() {
     return () => window.clearTimeout(timeout)
   }, [toastVisible])
 
-  // Auto-select 'hunger' trigger when hunger level is 3
+  // Auto-select 'hunger' trigger only when hunger level is 3
   useEffect(() => {
     if (hungerLevel === 3 && triggerType === null) {
       setTriggerType("hunger")
-    } else if (hungerLevel !== 3 && triggerType === "hunger") {
-      setTriggerType(null)
     }
-  }, [hungerLevel, triggerType])
+  }, [hungerLevel])
 
   const addMeal = async () => {
-    if (!text.trim() || hungerLevel === null || saving) return
+    if (!text.trim() || hungerLevel === null || triggerType === null || saving) return
 
     setSaving(true)
 
@@ -399,7 +397,7 @@ export default function Home() {
                 <motion.button
                   onClick={addMeal}
                   whileTap={{ scale: 0.98 }}
-                  disabled={!text.trim() || hungerLevel === null || saving}
+                  disabled={!text.trim() || hungerLevel === null || triggerType === null || saving}
                   className="flex-[1.5] rounded-xl py-2.5 text-[11px] font-semibold text-white disabled:opacity-40"
                   style={{ background: "var(--grad)" }}
                 >
