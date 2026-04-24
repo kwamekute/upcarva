@@ -18,6 +18,7 @@ export default function Home() {
   const [hungerLevel, setHungerLevel] = useState(null)
   const [triggerType, setTriggerType] = useState(null)
   const [cost, setCost] = useState("")
+  const [mealTime, setMealTime] = useState("") // Empty = use current time
   const [showModal, setShowModal] = useState(false)
   const [saving, setSaving] = useState(false)
   const [toastMsg, setToastMsg] = useState("")
@@ -44,6 +45,7 @@ export default function Home() {
     setHungerLevel(null)
     setTriggerType(null)
     setCost("")
+    setMealTime("")
   }
 
   const showToast = (msg) => {
@@ -82,6 +84,15 @@ export default function Home() {
       }
 
       const today = new Date().toISOString().split("T")[0]
+      
+      // If user specified a time, use that; otherwise use current time
+      let eatenAt
+      if (mealTime) {
+        eatenAt = `${today}T${mealTime}:00Z`
+      } else {
+        eatenAt = new Date().toISOString()
+      }
+      
       const { error } = await supabase.from("meals").insert([
         {
           auth_id: user.id,
@@ -89,7 +100,8 @@ export default function Home() {
           hunger_level: hungerLevel,
           trigger_type: triggerType,
           cost: cost ? parseFloat(cost) : null,
-          log_date: today
+          log_date: today,
+          eaten_at: eatenAt
         }
       ])
 
@@ -103,6 +115,7 @@ export default function Home() {
       setHungerLevel(null)
       setTriggerType(null)
       setCost("")
+      setMealTime("")
       silentRefetch()
       setShowModal(false)
       setSaving(false)
@@ -215,7 +228,7 @@ export default function Home() {
               Nothing yet. Your first log starts everything.
             </p>
           ) : (
-            meals.map((meal, i) => (
+            meals.sort((a, b) => new Date(a.eaten_at) - new Date(b.eaten_at)).map((meal, i) => (
               <motion.div
                 key={meal.id}
                 initial={{ opacity: 0, y: 12, x: -10 }}
@@ -233,7 +246,7 @@ export default function Home() {
                 <div className="min-w-0">
                   <p className="truncate text-[11px] font-medium text-slate-800">{meal.description}</p>
                   <p className="mt-0.5 text-[9px] text-slate-400">
-                    {new Date(meal.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                    {new Date(meal.eaten_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                   </p>
                 </div>
               </motion.div>
@@ -360,6 +373,19 @@ export default function Home() {
                     onChange={(e) => setCost(e.target.value)}
                     className="w-full rounded-xl border border-slate-200 bg-slate-50/80 px-3 py-2.5 text-[12px] text-slate-800 outline-none transition focus:border-[#7c6cff]/40 focus:bg-white"
                   />
+                </div>
+
+                <div>
+                  <label className="mb-1.5 block text-[11px] font-medium text-slate-600">
+                    Time eaten (incase you want to log a past meal)
+                  </label>
+                  <input
+                    type="time"
+                    value={mealTime}
+                    onChange={(e) => setMealTime(e.target.value)}
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50/80 px-3 py-2.5 text-[12px] text-slate-800 outline-none transition focus:border-[#7c6cff]/40 focus:bg-white"
+                  />
+                  <p className="mt-1 text-[9px] text-slate-400">Leave blank to use current time</p>
                 </div>
               </div>
 
