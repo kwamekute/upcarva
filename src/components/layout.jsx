@@ -22,12 +22,12 @@ export default function Layout() {
     <div className="min-h-screen flex flex-col">
 
       {/* Page Content */}
-      <div className="flex-1">
+      <div className="flex-1 pb-20">
         <Outlet />
       </div>
 
-      {/* Bottom Navigation */}
-      <div className="bg-white border-t border-slate-200/50 px-3 py-3 flex justify-around backdrop-blur-sm">
+      {/* Bottom Navigation - Sticky */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200/50 px-3 py-3 flex justify-around backdrop-blur-sm z-50">
         {navItems.map((item) => (
           <Link 
             key={item.path}

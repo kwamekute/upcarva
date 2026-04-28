@@ -1,17 +1,78 @@
 import { motion } from "framer-motion"
 import { useState, useEffect } from "react"
 import { useInsights } from "../hooks/useInsights"
+import { useMealLogs } from "../hooks/useMealLogs"
 import { useAuth } from "../hooks/useAuth"
 import { supabase } from "../lib/supabase"
 
 export default function Insights() {
   const { insights } = useInsights()
   const { session } = useAuth()
+  const { logs } = useMealLogs()
   const [triggersByInsight, setTriggersByInsight] = useState({})
+  const [currentDay, setCurrentDay] = useState(1)
 
   const formatDate = (dateString) => {
     const date = new Date(dateString)
     return date.toLocaleDateString("en-US", { month: "short", day: "numeric" })
+  }
+
+  // Calculate current day in challenge
+  useEffect(() => {
+    if (logs && logs.length > 0) {
+      // Get unique days logged
+      const uniqueDays = new Set(logs.map((log) => log.log_date)).size
+      setCurrentDay(Math.max(uniqueDays, 1))
+    }
+  }, [logs])
+
+  // Get reinforcement message based on current day
+  const getReinforcementMessage = () => {
+    if (currentDay <= 2) {
+      return {
+        text: "Keep logging — we're collecting your patterns.",
+        subtext: null,
+        showDots: true
+      }
+    } else if (currentDay === 3) {
+      return {
+        text: "Early signal spotted — keep logging to see it sharpen.",
+        subtext: null,
+        showDots: true
+      }
+    } else if (currentDay >= 4 && currentDay <= 6) {
+      return {
+        text: "We're seeing more patterns — keep logging.",
+        subtext: "Day 7 unlocks more.",
+        showDots: true
+      }
+    } else if (currentDay === 7) {
+      return {
+        text: "A pattern is forming.",
+        subtext: "Keep logging to confirm it.",
+        showDots: true
+      }
+    } else if (currentDay >= 8 && currentDay <= 10) {
+      const daysUntilReport = 14 - currentDay
+      return {
+        text: "Pattern confirmed — full report unlocks in",
+        subtext: `${daysUntilReport} ${daysUntilReport === 1 ? "day" : "days"}`,
+        showDots: true
+      }
+    } else if (currentDay >= 11 && currentDay <= 13) {
+      return {
+        text: "We're excited — report is almost ready.",
+        subtext: "Keep logging.",
+        showDots: true
+      }
+    } else if (currentDay >= 14) {
+      return {
+        text: "You did it! Tomorrow you get the full picture.",
+        subtext: null,
+        showDots: true
+      }
+    }
+    return { text: null, subtext: null, showDots: false }
   }
 
   const TRIGGER_EMOJIS = {
@@ -219,9 +280,55 @@ export default function Insights() {
     )
   }
 
+  const message = getReinforcementMessage()
+
   return (
     <div className="relative min-h-screen bg-[#f5f6fa] px-4 py-6">
       <div className="max-w-sm mx-auto">
+        {/* Reinforcement Message */}
+        {message.text && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, ease: "easeOut" }}
+            className="mb-6 text-center"
+          >
+            <div className="flex items-center justify-center gap-2 mb-2">
+              {message.showDots && (
+                <>
+                  <motion.span
+                    animate={{ opacity: [0.4, 1, 0.4] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                    className="text-lg"
+                  >
+                    ✨
+                  </motion.span>
+                  <motion.span
+                    animate={{ opacity: [0.4, 1, 0.4] }}
+                    transition={{ duration: 2, repeat: Infinity, delay: 0.3 }}
+                    className="text-lg"
+                  >
+                    ✨
+                  </motion.span>
+                  <motion.span
+                    animate={{ opacity: [0.4, 1, 0.4] }}
+                    transition={{ duration: 2, repeat: Infinity, delay: 0.6 }}
+                    className="text-lg"
+                  >
+                    ✨
+                  </motion.span>
+                </>
+              )}
+            </div>
+            <p className="text-[12px] font-medium text-[#1a1a2e] leading-relaxed">
+              {message.text}
+            </p>
+            {message.subtext && (
+              <p className="text-[11px] text-gray-400 mt-1">{message.subtext}</p>
+            )}
+          </motion.div>
+        )}
+
         {insights.length === 0 ? (
           <div className="bg-white rounded-xl p-6 text-center shadow-sm">
             <p className="text-[13px] font-medium text-[#1a1a2e] mb-1">
