@@ -4,6 +4,7 @@ import { useData } from "./contexts/DataContext"
 
 import Home from "./pages/home"
 import Progress from "./pages/progress"
+import Insights from "./pages/insights"
 import History from "./pages/history"
 import Layout from "./components/layout"
 import Auth from "./pages/auth"
@@ -38,6 +39,7 @@ function AppInner() {
         <Route path="/" element={<Layout />}>
           <Route index element={<Home />} />
           <Route path="progress" element={<Progress />} />
+          <Route path="insights" element={<Insights />} />
           <Route path="history" element={<History />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
