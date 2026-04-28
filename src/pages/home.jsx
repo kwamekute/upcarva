@@ -6,23 +6,68 @@ import { supabase } from "../lib/supabase"
 import { useUserProfile } from "../hooks/useUserProfile"
 import { useTodayMeals } from "../hooks/useTodayMeals"
 import { useMealLogs } from "../hooks/useMealLogs"
+import { useInsights } from "../hooks/useInsights"
 import StreakCard from "../components/StreakCard"
 import Toast from "../components/Toast"
+import InsightPopup from "../components/InsightPopup"
+
+// Mock insights for testing — set SIMULATION_MODE to "day3", "day7", or null to use real data
+const SIMULATION_MODE = "day7"
+
+const MOCK_INSIGHTS = {
+  day3: {
+    id: "test-day3",
+    user_id: "test",
+    phase: "discovery",
+    day: 3,
+    type: "checkpoint",
+    is_read: false,
+    content: {
+      level: "day3",
+      core_insight: "You tend to eat your first meal late in the day"
+    }
+  },
+  day7: {
+    id: "test-day7",
+    user_id: "test",
+    phase: "discovery",
+    day: 7,
+    type: "checkpoint",
+    is_read: false,
+    content: {
+      level: "day7",
+      core_insight: "You eat once a day — usually in the evening",
+      explanation: "This leads to arriving very hungry, making overeating more likely",
+      why_it_matters: "Spreading food earlier reduces evening hunger and improves control",
+      highlight: "Your food choices are solid — timing is the main issue",
+      stats: {
+        days_logged: 6,
+        avg_meal_time: "7pm",
+        single_meal_days: 5
+      }
+    }
+  }
+}
 
 export default function Home() {
   const { profile } = useUserProfile()
   const { silentRefetch } = useData()
   const { meals, hasLoggedToday } = useTodayMeals()
   const { streak, isStreakAtRisk, logs, challengeDays } = useMealLogs()
+  const { unreadInsight, markAsRead } = useInsights()
   const [text, setText] = useState("")
   const [hungerLevel, setHungerLevel] = useState(null)
   const [triggerType, setTriggerType] = useState(null)
   const [cost, setCost] = useState("")
-  const [mealTime, setMealTime] = useState("") // Empty = use current time
+  const [mealTime, setMealTime] = useState("")
   const [showModal, setShowModal] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [showInsightPopup, setShowInsightPopup] = useState(false)
   const [toastMsg, setToastMsg] = useState("")
   const [toastVisible, setToastVisible] = useState(false)
+
+  // Use simulated insight if SIMULATION_MODE is set, otherwise use real unreadInsight
+  const activeInsight = SIMULATION_MODE ? MOCK_INSIGHTS[SIMULATION_MODE] : unreadInsight
 
   const getButtonText = () => {
     if (isStreakAtRisk) return "Don't break your streak 🔥"
@@ -120,6 +165,10 @@ export default function Home() {
       const newMealCount = meals.length + 1
       if (newMealCount === 1) {
         showToast(`Day ${streak + 1} started 🔥`)
+        // Show insight pop-up 800ms after first meal toast
+        if (activeInsight) {
+          setTimeout(() => setShowInsightPopup(true), 800)
+        }
       } else if (newMealCount === 2) {
         showToast("💪 Keep the momentum!")
       } else if (newMealCount === 3) {
@@ -406,6 +455,21 @@ export default function Home() {
               </div>
             </motion.div>
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showInsightPopup && activeInsight && (
+          <InsightPopup
+            insight={activeInsight}
+            onClose={() => {
+              setShowInsightPopup(false)
+              // Only mark as read in DB if not in simulation mode
+              if (!SIMULATION_MODE && activeInsight.id) {
+                markAsRead(activeInsight.id)
+              }
+            }}
+          />
         )}
       </AnimatePresence>
     </div>
