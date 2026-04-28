@@ -65,9 +65,41 @@ export default function Home() {
   const [showInsightPopup, setShowInsightPopup] = useState(false)
   const [toastMsg, setToastMsg] = useState("")
   const [toastVisible, setToastVisible] = useState(false)
+  const [currentDay, setCurrentDay] = useState(1)
 
   // Use simulated insight if SIMULATION_MODE is set, otherwise use real unreadInsight
   const activeInsight = SIMULATION_MODE ? MOCK_INSIGHTS[SIMULATION_MODE] : unreadInsight
+
+  // Calculate current day in challenge
+  useEffect(() => {
+    if (logs && logs.length > 0) {
+      const uniqueDays = new Set(logs.map((log) => log.log_date)).size
+      setCurrentDay(Math.max(uniqueDays, 1))
+    }
+  }, [logs])
+
+  // Get reinforcement message based on current day
+  const getReinforcementMessage = () => {
+    if (currentDay <= 2) {
+      return "Keep logging — we're collecting your patterns."
+    } else if (currentDay === 3) {
+      return "Early signal spotted — keep logging to see it sharpen."
+    } else if (currentDay >= 4 && currentDay <= 6) {
+      return "We're seeing more patterns — keep logging. Day 7 unlocks more."
+    } else if (currentDay === 7) {
+      return "A pattern is forming. Keep logging to confirm it."
+    } else if (currentDay >= 8 && currentDay <= 10) {
+      const daysUntilReport = 14 - currentDay
+      return `Pattern confirmed — full report unlocks in ${daysUntilReport} ${daysUntilReport === 1 ? "day" : "days"}`
+    } else if (currentDay >= 11 && currentDay <= 13) {
+      return "We're excited — report is almost ready. Keep logging."
+    } else if (currentDay >= 14) {
+      return "You did it! Tomorrow you get the full picture."
+    }
+    return null
+  }
+
+  const message = getReinforcementMessage()
 
   const getButtonText = () => {
     if (isStreakAtRisk) return "Don't break your streak 🔥"
@@ -224,6 +256,24 @@ export default function Home() {
               transition={{ duration: 0.8, ease: "easeOut" }}
             />
           </div>
+
+          {message && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.3 }}
+              className="mt-3 flex items-center justify-center gap-2 text-[11px] text-gray-500"
+            >
+              <motion.span
+                animate={{ rotate: 360 }}
+                transition={{ duration: 2, repeat: Infinity, linear: true }}
+                className="text-sm"
+              >
+                ⚙️
+              </motion.span>
+              <span>{message}</span>
+            </motion.div>
+          )}
         </motion.div>
 
         <motion.div
