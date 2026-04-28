@@ -12,7 +12,7 @@ import Toast from "../components/Toast"
 import InsightPopup from "../components/InsightPopup"
 
 // Mock insights for testing — set SIMULATION_MODE to "day3", "day7", or null to use real data
-const SIMULATION_MODE = "day7"
+const SIMULATION_MODE = null
 
 const MOCK_INSIGHTS = {
   day3: {
