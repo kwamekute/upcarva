@@ -1,12 +1,127 @@
 import { motion } from "framer-motion"
+import { useState, useEffect } from "react"
 import { useInsights } from "../hooks/useInsights"
+import { useAuth } from "../hooks/useAuth"
+import { supabase } from "../lib/supabase"
 
 export default function Insights() {
   const { insights } = useInsights()
+  const { session } = useAuth()
+  const [triggersByInsight, setTriggersByInsight] = useState({})
 
   const formatDate = (dateString) => {
     const date = new Date(dateString)
     return date.toLocaleDateString("en-US", { month: "short", day: "numeric" })
+  }
+
+  const TRIGGER_EMOJIS = {
+    hunger: "🍽️",
+    bored: "😐",
+    stressed: "😣",
+    good_mood: "😊",
+    social: "👥",
+    habit: "🔁",
+    craving: "😋"
+  }
+
+  useEffect(() => {
+    const fetchAllTriggers = async () => {
+      if (!session?.user?.id) return
+
+      try {
+        const { data: meals, error } = await supabase
+          .from("meals")
+          .select("trigger_type")
+          .eq("auth_id", session.user.id)
+          .not("trigger_type", "is", null)
+
+        if (error) throw error
+
+        // Count trigger frequencies
+        const triggerCounts = {}
+        meals?.forEach((meal) => {
+          if (meal.trigger_type) {
+            triggerCounts[meal.trigger_type] = (triggerCounts[meal.trigger_type] || 0) + 1
+          }
+        })
+
+        // Get top 3 triggers sorted by count
+        const topTriggers = Object.entries(triggerCounts)
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 3)
+          .map(([type, count]) => ({ type, count }))
+
+        // Set triggers for all Day 7 insights
+        const triggers = {}
+        insights.forEach((insight) => {
+          if (insight.content?.level === "day7") {
+            triggers[insight.id] = topTriggers
+          }
+        })
+        setTriggersByInsight(triggers)
+      } catch (error) {
+        console.error("Error fetching triggers:", error)
+      }
+    }
+
+    fetchAllTriggers()
+  }, [session?.user?.id, insights])
+
+  const renderTriggerBars = (insightId) => {
+    const triggers = triggersByInsight[insightId] || []
+    if (triggers.length === 0) return null
+
+    // Calculate total count for percentage
+    const totalCount = triggers.reduce((sum, t) => sum + t.count, 0)
+
+    return (
+      <div className="mb-3">
+        <p className="text-[10px] font-semibold text-gray-600 uppercase tracking-wider mb-2">
+          Your top triggers
+        </p>
+        <div className="space-y-2">
+          {triggers.map((trigger, idx) => {
+            const percentage = Math.round((trigger.count / totalCount) * 100)
+            const triggerLabel = trigger.type.replace(/_/g, " ")
+
+            return (
+              <div key={idx}>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-[11px] font-medium text-[#1a1a2e]">
+                    {TRIGGER_EMOJIS[trigger.type]} {triggerLabel}
+                  </span>
+                  <span className="text-[11px] font-bold text-gray-500">{percentage}%</span>
+                </div>
+                <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                  <motion.div
+                    className="h-full rounded-full"
+                    style={{
+                      background:
+                        trigger.type === "hunger"
+                          ? "#10b981"
+                          : trigger.type === "bored"
+                          ? "#ff8a3d"
+                          : trigger.type === "stressed"
+                          ? "#ef4444"
+                          : trigger.type === "good_mood"
+                          ? "#10b981"
+                          : trigger.type === "social"
+                          ? "#f59e0b"
+                          : trigger.type === "habit"
+                          ? "#6366f1"
+                          : "#ec4899"
+                    }}
+                    initial={{ width: 0 }}
+                    animate={{ width: `${percentage}%` }}
+                    transition={{ duration: 0.6, ease: "easeOut", delay: idx * 0.1 }}
+                  />
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+    )
   }
 
   const renderInsightCard = (insight) => {
@@ -83,6 +198,9 @@ export default function Insights() {
                 </div>
               </div>
             )}
+
+            {/* Trigger bars */}
+            {renderTriggerBars(insight.id)}
 
             {/* Why it matters */}
             <div className="bg-[#f8f7ff] border-l-4 border-[#7c5cbf] rounded-r-lg px-3 py-2 mb-2 text-[11px] text-[#6b6b80] leading-relaxed">

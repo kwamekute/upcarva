@@ -146,48 +146,52 @@ export default function InsightPopup({ insight, onClose }) {
             <p className="text-[10px] font-semibold text-gray-600 uppercase tracking-wider mb-2">
               Your top triggers
             </p>
-            <div className="space-y-1.5">
-              {topTriggers.map((trigger, idx) => {
-                const maxCount = topTriggers[0]?.count || 1
-                const percentage = (trigger.count / maxCount) * 100
-                const triggerLabel = trigger.type.replace(/_/g, " ")
+            {(() => {
+              const totalCount = topTriggers.reduce((sum, t) => sum + t.count, 0)
+              return (
+                <div className="space-y-1.5">
+                  {topTriggers.map((trigger, idx) => {
+                    const percentage = Math.round((trigger.count / totalCount) * 100)
+                    const triggerLabel = trigger.type.replace(/_/g, " ")
 
-                return (
-                  <div key={idx}>
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-[11px] font-medium text-[#1a1a2e]">
-                        {TRIGGER_EMOJIS[trigger.type]} {triggerLabel}
-                      </span>
-                      <span className="text-[11px] font-bold text-gray-400">{trigger.count}</span>
-                    </div>
-                    <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                      <motion.div
-                        className="h-full rounded-full"
-                        style={{
-                          background:
-                            trigger.type === "hunger"
-                              ? "linear-gradient(135deg, #7c6cff, #5b67ff)"
-                              : trigger.type === "bored"
-                              ? "linear-gradient(135deg, #ff8a3d, #ffa500)"
-                              : trigger.type === "stressed"
-                              ? "linear-gradient(135deg, #ef4444, #dc2626)"
-                              : trigger.type === "good_mood"
-                              ? "linear-gradient(135deg, #10b981, #059669)"
-                              : trigger.type === "social"
-                              ? "linear-gradient(135deg, #f59e0b, #f97316)"
-                              : trigger.type === "habit"
-                              ? "linear-gradient(135deg, #6366f1, #8b5cf6)"
-                              : "linear-gradient(135deg, #ec4899, #f43f5e)"
-                        }}
-                        initial={{ width: 0 }}
-                        animate={{ width: `${percentage}%` }}
-                        transition={{ duration: 0.6, ease: "easeOut", delay: idx * 0.1 }}
-                      />
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
+                    return (
+                      <div key={idx}>
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-[11px] font-medium text-[#1a1a2e]">
+                            {TRIGGER_EMOJIS[trigger.type]} {triggerLabel}
+                          </span>
+                          <span className="text-[11px] font-bold text-gray-500">{percentage}%</span>
+                        </div>
+                        <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                          <motion.div
+                            className="h-full rounded-full"
+                            style={{
+                              background:
+                                trigger.type === "hunger"
+                                  ? "#10b981"
+                                  : trigger.type === "bored"
+                                  ? "#ff8a3d"
+                                  : trigger.type === "stressed"
+                                  ? "#ef4444"
+                                  : trigger.type === "good_mood"
+                                  ? "#10b981"
+                                  : trigger.type === "social"
+                                  ? "#f59e0b"
+                                  : trigger.type === "habit"
+                                  ? "#6366f1"
+                                  : "#ec4899"
+                            }}
+                            initial={{ width: 0 }}
+                            animate={{ width: `${percentage}%` }}
+                            transition={{ duration: 0.6, ease: "easeOut", delay: idx * 0.1 }}
+                          />
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )
+            })()}
           </div>
         )}
 
