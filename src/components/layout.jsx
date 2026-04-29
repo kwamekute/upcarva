@@ -13,8 +13,8 @@ export default function Layout() {
 
   const navItems = [
     { path: "/", label: "Home", icon: "🏠" },
-    { path: "/progress", label: "Progress", icon: "📊" },
     { path: "/insights", label: "Insights", icon: "💡" },
+    { path: "/progress", label: "Progress", icon: "📊" },
     { path: "/history", label: "History", icon: "📝" }
   ]
 
