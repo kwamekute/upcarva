@@ -9,6 +9,9 @@ import History from "./pages/history"
 import Layout from "./components/layout"
 import Auth from "./pages/auth"
 import ProfileSetup from "./pages/profilesetup"
+import Report from "./pages/report"
+import Calibration from "./pages/calibration"
+import Paywall from "./pages/paywall"
 import { DataProvider } from "./contexts/DataContext"
 
 function AppInner() {
@@ -42,6 +45,9 @@ function AppInner() {
           <Route path="insights" element={<Insights />} />
           <Route path="history" element={<History />} />
         </Route>
+        <Route path="/report" element={<Report />} />
+        <Route path="/calibration" element={<Calibration />} />
+        <Route path="/paywall" element={<Paywall />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </div>
