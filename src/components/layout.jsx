@@ -13,8 +13,8 @@ export default function Layout() {
 
   const navItems = [
     { path: "/", label: "Home", icon: "🏠" },
-    { path: "/insights", label: "Insights", icon: "💡" },
     { path: "/progress", label: "Progress", icon: "📊" },
+    { path: "/insights", label: "Insights", icon: "💡" },
     { path: "/history", label: "History", icon: "📝" }
   ]
 
@@ -22,12 +22,12 @@ export default function Layout() {
     <div className="min-h-screen flex flex-col">
 
       {/* Page Content */}
-      <div className="flex-1 pb-20">
+      <div className="flex-1">
         <Outlet />
       </div>
 
-      {/* Bottom Navigation - Sticky */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200/50 px-3 py-3 flex justify-around backdrop-blur-sm z-50">
+      {/* Bottom Navigation */}
+      <div className="bg-white border-t border-slate-200/50 px-3 py-3 flex justify-around backdrop-blur-sm">
         {navItems.map((item) => (
           <Link 
             key={item.path}
@@ -54,6 +54,14 @@ export default function Layout() {
               )}
             </motion.span>
             <span className="text-[10px] font-medium">{item.label}</span>
+            {isActive(item.path) && (
+              <motion.div
+                layoutId="nav-indicator"
+                className="absolute bottom-0 left-1/2 -translate-x-1/2 h-0.5 bg-green-600 rounded-full"
+                style={{ width: "24px" }}
+                transition={{ type: "spring", stiffness: 400, damping: 30 }}
+              />
+            )}
           </Link>
         ))}
       </div>
