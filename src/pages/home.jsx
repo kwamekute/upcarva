@@ -16,7 +16,7 @@ import CompletionModal from "../components/CompletionModal"
 // Mock insights for testing — set SIMULATION_MODE to "day3", "day7", "day14", "day15", or null to use real data
 // For autonomous testing, also override SIMULATION_CURRENT_DAY to force currentDay to a specific value
 const SIMULATION_MODE = null
-const SIMULATION_CURRENT_DAY = null // null = use real logs, or set to 3, 7, 14, 15, etc for testing
+const SIMULATION_CURRENT_DAY = null// null = use real logs, or set to 3, 7, 14, 15, etc for testing
 
 const MOCK_INSIGHTS = {
   day3: {
