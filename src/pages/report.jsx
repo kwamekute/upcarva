@@ -4,8 +4,8 @@ import { motion } from "framer-motion"
 import { useInsights } from "../hooks/useInsights"
 import { useData } from "../contexts/DataContext"
 
-const SIMULATION_MODE = "day14"
-//const SIMULATION_CURRENT_DAY = 15 // null = use real logs, or set to 3, 7, 14, 15, etc for testing
+const SIMULATION_MODE = null
+const SIMULATION_CURRENT_DAY = null // null = use real logs, or set to 3, 7, 14, 15, etc for testing
 
 const MOCK_INSIGHTS = {
   day3: {
@@ -155,11 +155,27 @@ export default function Report() {
  // const day14 = insights.find((i) => i.content?.level === "day14")
  let day14 = null
 
+ 
+ console.log("Insights in Report page:", insights)
 if (SIMULATION_MODE === "day14") {
   day14 = MOCK_INSIGHTS.day14
 } else {
-  day14 = insights.find((i) => i.content?.level === "day14")
+  day14 = insights.find((i) => {
+  const level = i.content?.level?.toLowerCase()?.trim()
+
+  return (
+    Number(i.day) === 14 &&
+    i.type === "summary" 
+   && level === "day14"
+  )
+})
+  // day14 = insights.find(  (i) =>
+  //   Number(i.day) === 14 &&
+  //   i.type === "summary" &&
+  //   i.content.level === "day14")
+  //console.log("Fetched day14 insight:", day14)
 }
+//console.log("Final day14 insight used in Report page:", day14)  
 
   useEffect(() => {
     const handleScroll = (e) => {
@@ -205,6 +221,8 @@ if (SIMULATION_MODE === "day14") {
   const patterns = content.patterns || []
   const experiments = content.experiments || []
   const missing = content.missing_data_improvements || []
+
+
 
   const colorMap = {
     teal: "#0eb89a",

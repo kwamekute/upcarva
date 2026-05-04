@@ -17,7 +17,6 @@ export function useInsights() {
         .select("*")
         .eq("user_id", session.user.id)
         .order("created_at", { ascending: true })
-
       if (error) throw error
       setInsights(data || [])
     } catch (error) {
