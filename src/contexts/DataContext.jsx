@@ -169,6 +169,7 @@ export function DataProvider({ children, session }) {
 
   const value = {
     profile,
+    phase2_unlocked: !!profile?.phase2_unlocked,
     meals,
     groupedMeals,
     logs,

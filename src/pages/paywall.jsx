@@ -88,7 +88,8 @@ const handleCheckCode = async () => {
     }
 
     // Success
-    navigate("/calibration")
+    localStorage.setItem("upcarva_phase2_preview", "true")
+    navigate("/")
   } catch (err) {
     console.error(err)
     setCodeError("Something went wrong.")
