@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from "framer-motion"
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 
 import Toast from "./Toast"
 import { useData } from "../contexts/DataContext"
@@ -11,10 +11,17 @@ import { supabase } from "../lib/supabase"
 const serifStyle = { fontFamily: "'Instrument Serif', serif" }
 
 function MoveCard({ move, acknowledged, onGotIt, onSwap }) {
+  const initialMount = useRef(true)
+  const shouldAnimate = !(initialMount.current && acknowledged)
+
+  useEffect(() => {
+    initialMount.current = false
+  }, [])
+
   return (
     <motion.section
       layout
-      initial={{ opacity: 0, y: 14 }}
+      initial={shouldAnimate ? { opacity: 0, y: 14 } : false}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.28, ease: "easeOut", delay: 0.05 }}
       className={`relative overflow-hidden rounded-[20px] bg-[#111118] shadow-[0_18px_48px_rgba(15,23,42,0.16)] ${
@@ -48,7 +55,7 @@ function MoveCard({ move, acknowledged, onGotIt, onSwap }) {
                 whileTap={{ scale: 0.97 }}
                 className="rounded-xl bg-[#0db89a] px-4 py-2.5 text-[12px] font-bold text-[#111118]"
               >
-                Got it
+                I Got this!
               </motion.button>
               <motion.button
                 onClick={onSwap}
@@ -78,8 +85,8 @@ function MoveCard({ move, acknowledged, onGotIt, onSwap }) {
   )
 }
 
-function FeedbackPopup({ attempt, onSubmit, onSkip }) {
-  const title = attempt?.title || "Add protein to your first meal."
+function FeedbackPopup({ attempt, onSubmit }) {
+  const title = attempt?.title || "Your move from yesterday."
   const [selectedStatus, setSelectedStatus] = useState(null)
   const [partlyReason, setPartlyReason] = useState("")
 
@@ -182,9 +189,6 @@ function FeedbackPopup({ attempt, onSubmit, onSkip }) {
         <p className="mt-4 text-center text-[9px] italic text-[#8a8a9a]">
           Your answer helps personalize tomorrow.
         </p>
-        <button onClick={onSkip} className="mt-2 w-full py-1 text-center text-[11px] text-[#8a8a9a]">
-          Skip for now →
-        </button>
       </motion.div>
     </motion.div>
   )
@@ -426,13 +430,14 @@ export default function Phase2Home() {
   const { meals } = useTodayMeals()
   const { streak } = useMealLogs()
   const [showLogSheet, setShowLogSheet] = useState(false)
-  const [moveAcknowledged, setMoveAcknowledged] = useState(false)
   const [toastMsg, setToastMsg] = useState("")
   const [toastVisible, setToastVisible] = useState(false)
 
   const {
+    loading,
     phase2Day,
     selectedMove,
+    todayAttempt,
     yesterdayAttempt,
     shouldAskYesterday,
     weekSummary,
@@ -442,7 +447,6 @@ export default function Phase2Home() {
     skipFeedback,
     seedDemoYesterday
   } = usePhase2Moves({ userId: profile?.auth_id, enabled: true })
-
   const demoControls = import.meta.env.DEV || new URLSearchParams(window.location.search).has("phase2")
   const momentumLabel = streak >= 7 ? "Strong" : streak >= 3 ? "Building fast" : "Building"
   const winsUntilClick = Math.max(2, 4 - weekSummary.completed)
@@ -459,6 +463,8 @@ export default function Phase2Home() {
     setToastVisible(true)
   }
 
+  const isHydrated = !loading
+
   return (
     <div className="relative min-h-screen overflow-hidden bg-[#f6f7fb] px-4 pb-24 py-5">
       <Toast message={toastMsg} visible={toastVisible} />
@@ -468,7 +474,11 @@ export default function Phase2Home() {
         <div className="absolute bottom-10 right-[-40px] h-[180px] w-[180px] rounded-full bg-[#ff8a3d]/12 blur-3xl" />
       </div>
 
-      <div className="relative mx-auto max-w-sm space-y-4">
+      <div
+        className={`relative mx-auto max-w-sm space-y-4 transition-opacity duration-150 ${
+          isHydrated && shouldAskYesterday ? "opacity-60" : "opacity-100"
+        }`}
+      >
         <motion.header
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -487,17 +497,43 @@ export default function Phase2Home() {
                 <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">
                   Calibration
                 </p>
-                <h1 className="mt-1 text-[24px] font-semibold leading-none tracking-[-0.2px] text-slate-800">
+                {/* <h1 className="mt-1 text-[24px] font-semibold leading-none tracking-[-0.2px] text-slate-800">
                   Day {phase2Day}
-                </h1>
+                </h1> */}
               </div>
               <p className="mt-2 text-[11px] leading-relaxed text-slate-500">
                 {winCopy} more wins and things will start to click
               </p>
             </div>
             <div className="flex w-[118px] flex-col items-end gap-1.5">
-              <div className="flex items-center gap-1.5 rounded-full border border-[#e8e6e1] bg-white px-2.5 py-1.5 shadow-[0_2px_20px_rgba(0,0,0,0.07)]">
-                <span className="text-[9px] text-[#8a8a9a]">{momentumLabel}</span>
+                  {/* <div className="flex items-center gap-1.5 rounded-full border border-[#e8e6e1] bg-white px-2.5 py-1.5 shadow-[0_2px_20px_rgba(0,0,0,0.07)]">
+                    <span className="text-[9px] text-[#8a8a9a]">2 moves completed </span>
+                    <span className="text-[9px] text-[#8a8a9a]"> {momentumLabel}</span>
+                    <motion.span
+                      animate={{ scale: [1, 1.18, 1], rotate: [0, 6, -4, 0] }}
+                      transition={{ duration: 1.2, repeat: Infinity, repeatDelay: 2.4, ease: "easeInOut" }}
+                      className="text-[12px] leading-none"
+                    >
+                      ⚡
+                    </motion.span>
+                </div> */}
+                <div className="flex items-center gap-1.5 rounded-full border border-[#e8e6e1] bg-white px-2.5 py-1.5 shadow-[0_2px_20px_rgba(0,0,0,0.07)]">
+  
+                <span className="whitespace-nowrap text-[9px] text-[#8a8a9a] flex items-center gap-1">
+                  <motion.span
+                    key={weekSummary.completed}
+                    initial={{ scale: 0.8 }}
+                    animate={{ scale: 1 }}
+                    transition={{ duration: 0.25 }}
+                    className="text-[11px] font-bold text-teal-500"
+                  >
+                    {weekSummary.completed}
+                  </motion.span>
+                  <span>moves completed</span>
+                </span>
+
+                <span className="text-[9px] text-[#8a8a9a]"> {momentumLabel}</span>
+
                 <motion.span
                   animate={{ scale: [1, 1.18, 1], rotate: [0, 6, -4, 0] }}
                   transition={{ duration: 1.2, repeat: Infinity, repeatDelay: 2.4, ease: "easeInOut" }}
@@ -505,6 +541,7 @@ export default function Phase2Home() {
                 >
                   ⚡
                 </motion.span>
+
               </div>
               <div className="flex items-center gap-1.5 rounded-full border border-[#e8e6e1] bg-white px-2.5 py-1.5 shadow-[0_2px_20px_rgba(0,0,0,0.07)]">
                 <span className="text-sm font-bold leading-none text-[#111118]">{streak}</span>
@@ -517,10 +554,10 @@ export default function Phase2Home() {
                   🔥
                 </motion.span>
               </div>
-              <p className="mt-1 text-right text-[9px] font-semibold leading-tight text-slate-500">
+              {/* <p className="mt-1 text-right text-[9px] font-semibold leading-tight text-slate-500">
                 {weekSummary.completed} {weekSummary.completed === 1 ? "move" : "moves"} this week
-              </p>
-              <div className="grid w-full grid-cols-7 gap-0.5">
+              </p> */}
+              {/* <div className="grid w-full grid-cols-7 gap-0.5">
                 {Array.from({ length: 7 }).map((_, index) => {
                   const day = weekSummary.days[index]
                   const status = day?.completion_status
@@ -533,21 +570,19 @@ export default function Phase2Home() {
 
                   return <span key={index} className={`h-2 rounded-[2px] ${color}`} />
                 })}
-              </div>
+              </div> */}
             </div>
           </div>
         </motion.header>
 
         <MoveCard
           move={selectedMove}
-          acknowledged={moveAcknowledged}
+          acknowledged={!!todayAttempt}
           onGotIt={() => {
             acceptTodayMove()
-            setMoveAcknowledged(true)
             showToast("Move saved for today.")
           }}
           onSwap={() => {
-            setMoveAcknowledged(false)
             swapMove()
           }}
         />
@@ -612,14 +647,13 @@ export default function Phase2Home() {
       </div>
 
       <AnimatePresence>
-        {shouldAskYesterday && (
+        {isHydrated && shouldAskYesterday && (  
           <FeedbackPopup
             attempt={yesterdayAttempt}
             onSubmit={(status, partlyReason) => {
               submitFeedback(status, partlyReason)
               showToast("Thanks. Tomorrow gets smarter.")
             }}
-            onSkip={skipFeedback}
           />
         )}
       </AnimatePresence>

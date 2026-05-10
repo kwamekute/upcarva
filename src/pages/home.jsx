@@ -201,6 +201,12 @@ const testCurrentDay = SIMULATE_DAY ?? currentDay
       localStorage.getItem("upcarva_phase_override") === "phase1")
   const isPhase2 = !phase1Preview && (!!profile?.phase2_unlocked || phase2Preview)
 
+  //localStorage.setItem("upcarva_phase2_preview", "true")
+//location.reload()
+//localStorage.removeItem("upcarva_phase2_preview")
+//localStorage.removeItem("upcarva_phase_override")
+//location.reload()
+//
   // Load completion modal flag from localStorage on mount
   useEffect(() => {
     const shown = localStorage.getItem("completion_shown_14")
@@ -243,9 +249,6 @@ if (USE_MOCK_INSIGHTS) {
   }
 }
 
-console.log({
-  USE_MOCK_INSIGHTS
-})
   // Calculate current day in challenge
   useEffect(() => {
     if (logs && logs.length > 0) {

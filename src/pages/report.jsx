@@ -155,8 +155,6 @@ export default function Report() {
  // const day14 = insights.find((i) => i.content?.level === "day14")
  let day14 = null
 
- 
- console.log("Insights in Report page:", insights)
 if (SIMULATION_MODE === "day14") {
   day14 = MOCK_INSIGHTS.day14
 } else {

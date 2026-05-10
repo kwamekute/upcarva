@@ -81,9 +81,11 @@ export function usePhase2Moves({ userId, enabled }) {
   const [attempts, setAttempts] = useState([])
   const [swapOffset, setSwapOffset] = useState(0)
   const [dismissedFeedback, setDismissedFeedback] = useState(false)
+  const [forceFeedbackOpen, setForceFeedbackOpen] = useState(false)
   const [localVersion, setLocalVersion] = useState(0)
   const today = todayKey()
   const yesterday = offsetDate(-1)
+  const dismissKey = `upcarva_phase2_feedback_dismissed_${userId || "demo"}_${yesterday}`
 
   const fetchMoves = useCallback(async () => {
     if (!enabled || !userId) {
@@ -96,14 +98,14 @@ export function usePhase2Moves({ userId, enabled }) {
     const [{ data: movesData, error: movesError }, { data: attemptsData, error: attemptsError }] = await Promise.all([
       supabase
         .from("user_moves")
-        .select("id,user_id,status,priority_score,assigned_at,updated_at")
+        .select("id,user_id,status,priority_score,assigned_at,updated_at,title,subtext")
         .eq("user_id", userId)
-        .eq("status", "available")
+        .in("status", ["available", "active"])
         .order("priority_score", { ascending: false })
         .order("assigned_at", { ascending: true }),
       supabase
         .from("move_attempts")
-        .select("id,user_move_id,user_id,cycle_date,accepted_at,completion_status,feedback_at,created_at,updated_at")
+        .select("id,user_move_id,user_id,cycle_date,accepted_at,completion_status,feedback_at,created_at,updated_at,user_move:user_moves(id,title,subtext)")
         .eq("user_id", userId)
         .gte("cycle_date", currentMonthStart())
         .order("cycle_date", { ascending: false })
@@ -122,6 +124,10 @@ export function usePhase2Moves({ userId, enabled }) {
   }, [fetchMoves])
 
   const local = useMemo(() => readLocal(userId), [userId, localVersion])
+  const moveById = useMemo(
+    () => new Map((userMoves || []).map((move) => [move.id, move])),
+    [userMoves]
+  )
 
   const phase2Day = useMemo(() => {
     const dates = new Set(attempts.map((attempt) => attempt.cycle_date))
@@ -133,52 +139,162 @@ export function usePhase2Moves({ userId, enabled }) {
     return 1
   }, [attempts, local, today])
 
+  // const selectedMove = useMemo(() => {
+  //   const orderedMoves = userMoves.length ? userMoves : [{ id: "demo-move-1" }]
+  //   const index = (phase2Day - 1 + swapOffset) % MOVE_LIBRARY.length
+  //   const sourceMove = orderedMoves[swapOffset % orderedMoves.length] || orderedMoves[0]
+  //   return {
+  //     ...sourceMove,
+  //     ...getMoveCopy(index),
+  //     libraryIndex: index
+  //   }
+  // }, [phase2Day, swapOffset, userMoves])
   const selectedMove = useMemo(() => {
-    const orderedMoves = userMoves.length ? userMoves : [{ id: "demo-move-1" }]
+    const orderedMoves = userMoves.length ? userMoves : []
+    const activeMove = orderedMoves.find((move) => move.status === "active")
+    if (activeMove) {
+      return {
+        ...activeMove,
+        title: activeMove.title || "Today's move",
+        subtext: activeMove.subtext || "One small win today."
+      }
+    }
+
+    const availableMoves = orderedMoves.filter((move) => move.status === "available")
+
+    if (availableMoves.length > 0) {
+      const move = availableMoves[(phase2Day - 1 + swapOffset) % availableMoves.length]
+      return {
+        ...move,
+        title: move.title || getMoveCopy((phase2Day - 1 + swapOffset) % MOVE_LIBRARY.length).title,
+        subtext: move.subtext || getMoveCopy((phase2Day - 1 + swapOffset) % MOVE_LIBRARY.length).subtext
+      }
+    }
+
     const index = (phase2Day - 1 + swapOffset) % MOVE_LIBRARY.length
-    const sourceMove = orderedMoves[swapOffset % orderedMoves.length] || orderedMoves[0]
     return {
-      ...sourceMove,
-      ...getMoveCopy(index),
+      id: "demo-move-1",
+      ...MOVE_LIBRARY[index],
       libraryIndex: index
     }
   }, [phase2Day, swapOffset, userMoves])
 
+  const enrichAttempt = useCallback((attempt) => {
+    if (!attempt) return null
+    const linkedMove = moveById.get(attempt.user_move_id)
+    const joinedMove = attempt.user_move
+    return {
+      ...attempt,
+      title: joinedMove?.title || linkedMove?.title || attempt.title || null,
+      subtext: joinedMove?.subtext || linkedMove?.subtext || attempt.subtext || null
+    }
+  }, [moveById])
+
   const todayAttempt = useMemo(() => {
     const realAttempt = attempts.find((attempt) => attempt.cycle_date === today)
-    if (realAttempt) return realAttempt
+    if (realAttempt) return enrichAttempt(realAttempt)
 
-    return local.attempts?.[today] || null
-  }, [attempts, local, today])
+    return enrichAttempt(local.attempts?.[today] || null)
+  }, [attempts, local, today, enrichAttempt])
+
+  const activeMove = useMemo(() => {
+    if (!todayAttempt) return selectedMove
+
+    const matchedMove = userMoves.find((move) => move.id === todayAttempt.user_move_id)
+    if (matchedMove) {
+      return {
+        ...matchedMove,
+        title: matchedMove.title || selectedMove.title,
+        subtext: matchedMove.subtext || selectedMove.subtext
+      }
+    }
+
+    return {
+      ...selectedMove,
+      id: todayAttempt.user_move_id || selectedMove.id,
+      title: todayAttempt.title || selectedMove.title
+    }
+  }, [todayAttempt, userMoves, selectedMove])
 
   const yesterdayAttempt = useMemo(() => {
     const realAttempt = attempts.find((attempt) => attempt.cycle_date === yesterday)
-    if (realAttempt) return realAttempt
+    if (realAttempt) return enrichAttempt(realAttempt)
+    return enrichAttempt(local.attempts?.[yesterday] || null)
+  }, [attempts, local, yesterday, enrichAttempt])
 
-    return local.attempts?.[yesterday] || null
-  }, [attempts, local, yesterday])
-
-  const shouldAskYesterday = phase2Day > 1 && yesterdayAttempt?.completion_status === "pending" && !dismissedFeedback
+  const persistedDismissed =
+    typeof window !== "undefined" && localStorage.getItem(dismissKey) === "true"
+  const shouldAskYesterday =
+    !loading &&
+    (
+      forceFeedbackOpen ||
+      (
+        phase2Day > 1 &&
+        yesterdayAttempt?.completion_status === "pending" &&
+        !dismissedFeedback &&
+        !persistedDismissed
+      )
+    )
 
   const acceptTodayMove = async () => {
     if (todayAttempt || !userId) return
 
     if (!selectedMove.id?.startsWith("demo")) {
-      const { error } = await supabase.from("move_attempts").insert([
-        {
-          user_move_id: selectedMove.id,
-          user_id: userId,
-          cycle_date: today,
-          completion_status: "pending"
-        }
-      ])
+      const existingActiveMove = userMoves.find((move) => move.status === "active" && move.id !== selectedMove.id)
+      if (existingActiveMove) {
+        console.error("Cannot accept a new move while another move is active.")
+        return
+      }
+
+      const { data: insertedAttempt, error } = await supabase
+        .from("move_attempts")
+        .insert([
+          {
+            user_move_id: selectedMove.id,
+            user_id: userId,
+            cycle_date: today,
+            completion_status: "pending"
+          }
+        ])
+        .select("id,user_move_id,cycle_date,completion_status")
+        .single()
 
       if (!error) {
+        const { error: moveStatusError } = await supabase
+          .from("user_moves")
+          .update({
+            status: "active",
+            updated_at: new Date().toISOString()
+          })
+          .eq("id", selectedMove.id)
+          .eq("user_id", userId)
+
+        if (moveStatusError) {
+          console.error("Could not set move to active:", moveStatusError)
+        }
+
+        const next = readLocal(userId)
+        writeLocal(userId, {
+          ...next,
+          attempts: {
+            ...(next.attempts || {}),
+            [today]: {
+              id: insertedAttempt?.id || `local-${today}-${Date.now()}`,
+              user_move_id: selectedMove.id,
+              cycle_date: today,
+              completion_status: "pending",
+              title: selectedMove.title,
+              subtext: selectedMove.subtext
+            }
+          }
+        })
+        setLocalVersion((value) => value + 1)
         fetchMoves()
         return
       }
 
       console.error("Could not accept move:", error)
+      return
     }
 
     const next = readLocal(userId)
@@ -216,7 +332,27 @@ export function usePhase2Moves({ userId, enabled }) {
         .eq("id", yesterdayAttempt.id)
 
       if (!error) {
+        let nextMoveStatus = "paused"
+        if (status === "did_it") nextMoveStatus = "completed"
+        if (status === "partly") nextMoveStatus = "paused"
+        if (status === "not_today") nextMoveStatus = "paused"
+
+        const { error: moveStatusError } = await supabase
+          .from("user_moves")
+          .update({
+            status: nextMoveStatus,
+            updated_at: new Date().toISOString()
+          })
+          .eq("id", yesterdayAttempt.user_move_id)
+          .eq("user_id", userId)
+
+        if (moveStatusError) {
+          console.error("Could not update move status:", moveStatusError)
+        }
+
         setDismissedFeedback(true)
+        setForceFeedbackOpen(false)
+        localStorage.setItem(dismissKey, "true")
         fetchMoves()
         return
       }
@@ -238,24 +374,31 @@ export function usePhase2Moves({ userId, enabled }) {
       }
     })
     setDismissedFeedback(true)
+    setForceFeedbackOpen(false)
+    localStorage.setItem(dismissKey, "true")
   }
 
   const seedDemoYesterday = () => {
+    if (!selectedMove) return
+
     const next = readLocal(userId)
+    const yesterdayId = `local-${yesterday}-${Date.now()}`
     writeLocal(userId, {
       ...next,
       attempts: {
         ...(next.attempts || {}),
         [yesterday]: {
-          id: `local-${yesterday}`,
-          user_move_id: "demo-move-1",
+          id: yesterdayId,
+          user_move_id: selectedMove.id,
           cycle_date: yesterday,
           completion_status: "pending",
-          title: MOVE_LIBRARY[0].title
+          title: selectedMove.title
         }
       }
     })
     setDismissedFeedback(false)
+    setForceFeedbackOpen(true)
+    localStorage.removeItem(dismissKey)
     setLocalVersion((value) => value + 1)
   }
 
@@ -299,7 +442,8 @@ export function usePhase2Moves({ userId, enabled }) {
   return {
     loading,
     phase2Day,
-    selectedMove,
+    selectedMove: activeMove,
+    todayAttempt,
     yesterdayAttempt,
     shouldAskYesterday,
     weekSummary,
@@ -307,7 +451,11 @@ export function usePhase2Moves({ userId, enabled }) {
     acceptTodayMove,
     submitFeedback,
     swapMove: () => setSwapOffset((value) => value + 1),
-    skipFeedback: () => setDismissedFeedback(true),
+    skipFeedback: () => {
+      setDismissedFeedback(true)
+      setForceFeedbackOpen(false)
+      localStorage.setItem(dismissKey, "true")
+    },
     seedDemoYesterday
   }
 }
