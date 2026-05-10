@@ -12,6 +12,7 @@ import StreakCard from "../components/StreakCard"
 import Toast from "../components/Toast"
 import InsightPopup from "../components/InsightPopup"
 import CompletionModal from "../components/CompletionModal"
+import Phase2Home from "../components/Phase2Home"
 
 // Mock insights for testing — set SIMULATION_MODE to "day3", "day7", "day14", "day15", or null to use real data
 // For autonomous testing, also override SIMULATION_CURRENT_DAY to force currentDay to a specific value
@@ -190,7 +191,22 @@ const testCurrentDay = SIMULATE_DAY ?? currentDay
   const [showInsightPopup, setShowInsightPopup] = useState(false)
   const [toastMsg, setToastMsg] = useState("")
   const [toastVisible, setToastVisible] = useState(false)
+  const phase2Preview =
+    typeof window !== "undefined" &&
+    (new URLSearchParams(window.location.search).has("phase2") ||
+      localStorage.getItem("upcarva_phase2_preview") === "true")
+  const phase1Preview =
+    typeof window !== "undefined" &&
+    (new URLSearchParams(window.location.search).has("phase1") ||
+      localStorage.getItem("upcarva_phase_override") === "phase1")
+  const isPhase2 = !phase1Preview && (!!profile?.phase2_unlocked || phase2Preview)
 
+  //localStorage.setItem("upcarva_phase2_preview", "true")
+//location.reload()
+//localStorage.removeItem("upcarva_phase2_preview")
+//localStorage.removeItem("upcarva_phase_override")
+//location.reload()
+//
   // Load completion modal flag from localStorage on mount
   useEffect(() => {
     const shown = localStorage.getItem("completion_shown_14")
@@ -233,9 +249,6 @@ if (USE_MOCK_INSIGHTS) {
   }
 }
 
-console.log({
-  USE_MOCK_INSIGHTS
-})
   // Calculate current day in challenge
   useEffect(() => {
     if (logs && logs.length > 0) {
@@ -404,6 +417,10 @@ console.log({
       console.error(error)
       setSaving(false)
     }
+  }
+
+  if (isPhase2) {
+    return <Phase2Home />
   }
 
   return (

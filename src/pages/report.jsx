@@ -5,7 +5,7 @@ import { useInsights } from "../hooks/useInsights"
 import { useData } from "../contexts/DataContext"
 
 const SIMULATION_MODE = null
-const SIMULATION_CURRENT_DAY = null // null = use real logs, or set to 3, 7, 14, 15, etc for testing
+const SIMULATION_CURRENT_DAY = 15 // null = use real logs, or set to 3, 7, 14, 15, etc for testing
 
 const MOCK_INSIGHTS = {
   day3: {
@@ -155,8 +155,6 @@ export default function Report() {
  // const day14 = insights.find((i) => i.content?.level === "day14")
  let day14 = null
 
- 
- console.log("Insights in Report page:", insights)
 if (SIMULATION_MODE === "day14") {
   day14 = MOCK_INSIGHTS.day14
 } else {
@@ -564,7 +562,7 @@ if (SIMULATION_MODE === "day14") {
         <p className="mb-1 text-[10px] text-gray-400">What's next</p>
         <p className="mb-3 text-[14px] font-bold text-[#1a1a2e]">Now we can start changing it.</p>
         <motion.button
-          onClick={() => navigate(phase2_unlocked ? "/calibration" : "/paywall")}
+          onClick={() => navigate(phase2_unlocked ? "/" : "/paywall")}
           whileTap={{ scale: 0.97 }}
           className="w-full rounded-xl bg-teal-500 py-3 text-[13px] font-bold text-white"
         >
