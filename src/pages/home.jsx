@@ -18,7 +18,7 @@ import Phase2Home from "../components/Phase2Home"
 // For autonomous testing, also override SIMULATION_CURRENT_DAY to force currentDay to a specific value
 // const SIMULATION_MODE = null
 // const SIMULATION_CURRENT_DAY = 3// null = use real logs, or set to 3, 7, 14, 15, etc for testing
-const SIMULATE_DAY = null // e.g. 3, 7, 15
+const SIMULATE_DAY =  null // e.g. 3, 7, 15
 const USE_MOCK_INSIGHTS = false
 
 const MOCK_INSIGHTS = {
