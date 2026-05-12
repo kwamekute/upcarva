@@ -447,7 +447,7 @@ export default function Phase2Home() {
     skipFeedback,
     seedDemoYesterday
   } = usePhase2Moves({ userId: profile?.auth_id, enabled: true })
-  const demoControls = import.meta.env.DEV || new URLSearchParams(window.location.search).has("phase2")
+  const demoControls = import.meta.env.DEV
   const momentumLabel = streak >= 7 ? "Strong" : streak >= 3 ? "Building fast" : "Building"
   const winsUntilClick = Math.max(2, 4 - weekSummary.completed)
   const winCopy = winsUntilClick === 2 ? "2-3" : winsUntilClick
@@ -501,9 +501,9 @@ export default function Phase2Home() {
                   Day {phase2Day}
                 </h1> */}
               </div>
-              <p className="mt-2 text-[11px] leading-relaxed text-slate-500">
+              {/* <p className="mt-2 text-[11px] leading-relaxed text-slate-500">
                 {winCopy} more wins and things will start to click
-              </p>
+              </p> */}
             </div>
             <div className="flex w-[118px] flex-col items-end gap-1.5">
                   {/* <div className="flex items-center gap-1.5 rounded-full border border-[#e8e6e1] bg-white px-2.5 py-1.5 shadow-[0_2px_20px_rgba(0,0,0,0.07)]">
@@ -532,7 +532,7 @@ export default function Phase2Home() {
                   <span>moves completed</span>
                 </span>
 
-                <span className="text-[9px] text-[#8a8a9a]"> {momentumLabel}</span>
+                {/* <span className="text-[9px] text-[#8a8a9a]"> {momentumLabel}</span> */}
 
                 <motion.span
                   animate={{ scale: [1, 1.18, 1], rotate: [0, 6, -4, 0] }}
@@ -575,17 +575,28 @@ export default function Phase2Home() {
           </div>
         </motion.header>
 
-        <MoveCard
-          move={selectedMove}
-          acknowledged={!!todayAttempt}
-          onGotIt={() => {
-            acceptTodayMove()
-            showToast("Move saved for today.")
-          }}
-          onSwap={() => {
-            swapMove()
-          }}
-        />
+        {selectedMove ? (
+          <MoveCard
+            move={selectedMove}
+            acknowledged={!!todayAttempt}
+            onGotIt={() => {
+              acceptTodayMove()
+              showToast("Move saved for today.")
+            }}
+            onSwap={() => {
+              swapMove()
+            }}
+          />
+        ) : (
+          <section className="relative overflow-hidden rounded-[20px] bg-[#111118] p-4 shadow-[0_18px_48px_rgba(15,23,42,0.16)]">
+            <div className="pointer-events-none absolute right-[-34px] top-[-34px] h-[120px] w-[120px] rounded-full bg-[radial-gradient(circle,rgba(124,92,191,0.22),transparent_70%)]" />
+            <div className="pointer-events-none absolute bottom-[-30px] left-4 h-[90px] w-[90px] rounded-full bg-[radial-gradient(circle,rgba(249,115,22,0.16),transparent_70%)]" />
+            <p className="relative text-[8px] font-bold uppercase tracking-[0.12em] text-[#0db89a]">Today's move</p>
+            <p className="relative mt-2 text-[16px] leading-snug text-white" style={serifStyle}>
+              Oops.. seems no moves available yet
+            </p>
+          </section>
+        )}
 
         <motion.button
           initial={{ opacity: 0, y: 12, scale: 0.98 }}
