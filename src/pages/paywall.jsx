@@ -82,7 +82,8 @@ const handleCheckCode = async () => {
   .eq("auth_id", session?.user?.id)
   
     if (updateError) {
-      setCodeError("Error unlocking access. Try again.")
+      console.log("Error updating profile:", updateError)
+      setCodeError(updateError.messsage)
       setVerifying(false)
       return
     }
