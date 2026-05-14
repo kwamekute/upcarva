@@ -448,7 +448,9 @@ export default function Phase2Home() {
     seedDemoYesterday
   } = usePhase2Moves({ userId: profile?.auth_id, enabled: true })
   const demoControls = import.meta.env.DEV
-  const momentumLabel = streak >= 7 ? "Strong" : streak >= 3 ? "Building fast" : "Building"
+  const momentumLabel = streak >= 7 ? "Strong" : streak >= 3 ? "building fast" : "Building"
+  const firstName = profile?.name?.trim()?.split(" ")[0] || ""
+  const momentumMessage = `you are ${momentumLabel}!`
   const winsUntilClick = Math.max(2, 4 - weekSummary.completed)
   const winCopy = winsUntilClick === 2 ? "2-3" : winsUntilClick
 
@@ -497,6 +499,27 @@ export default function Phase2Home() {
                 <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">
                   Calibration
                 </p>
+                <motion.p
+                  initial={{ opacity: 0, y: 4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.28, ease: "easeOut", delay: 0.05 }}
+                  className="mt-1 text-[11px] leading-relaxed text-slate-500"
+                >
+                  {firstName ? `${firstName}, you're ` : "You're "}
+                  <span
+                    className="font-semibold"
+                    style={{ background: "var(--grad)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}
+                  >
+                    building momentum
+                  </span>{" "}
+                  <motion.span
+                    animate={{ scale: [1, 1.16, 1], rotate: [0, 8, -5, 0] }}
+                    transition={{ duration: 1.2, repeat: Infinity, repeatDelay: 2.1, ease: "easeInOut" }}
+                    className="inline-block"
+                  >
+                    ⚡
+                  </motion.span>
+                </motion.p>
                 {/* <h1 className="mt-1 text-[24px] font-semibold leading-none tracking-[-0.2px] text-slate-800">
                   Day {phase2Day}
                 </h1> */}
@@ -508,7 +531,7 @@ export default function Phase2Home() {
             <div className="flex w-[118px] flex-col items-end gap-1.5">
                   {/* <div className="flex items-center gap-1.5 rounded-full border border-[#e8e6e1] bg-white px-2.5 py-1.5 shadow-[0_2px_20px_rgba(0,0,0,0.07)]">
                     <span className="text-[9px] text-[#8a8a9a]">2 moves completed </span>
-                    <span className="text-[9px] text-[#8a8a9a]"> {momentumLabel}</span>
+                <span className="text-[9px] text-[#8a8a9a]">{momentumLabel}</span>
                     <motion.span
                       animate={{ scale: [1, 1.18, 1], rotate: [0, 6, -4, 0] }}
                       transition={{ duration: 1.2, repeat: Infinity, repeatDelay: 2.4, ease: "easeInOut" }}
@@ -534,13 +557,13 @@ export default function Phase2Home() {
 
                 {/* <span className="text-[9px] text-[#8a8a9a]"> {momentumLabel}</span> */}
 
-                <motion.span
+                {/* <motion.span
                   animate={{ scale: [1, 1.18, 1], rotate: [0, 6, -4, 0] }}
                   transition={{ duration: 1.2, repeat: Infinity, repeatDelay: 2.4, ease: "easeInOut" }}
                   className="text-[12px] leading-none"
                 >
                   ⚡
-                </motion.span>
+                </motion.span> */}
 
               </div>
               <div className="flex items-center gap-1.5 rounded-full border border-[#e8e6e1] bg-white px-2.5 py-1.5 shadow-[0_2px_20px_rgba(0,0,0,0.07)]">
