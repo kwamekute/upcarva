@@ -444,7 +444,6 @@ export default function Phase2Home() {
     acceptTodayMove,
     submitFeedback,
     swapMove,
-    skipFeedback,
     seedDemoYesterday
   } = usePhase2Moves({ userId: profile?.auth_id, enabled: true })
   const demoControls = import.meta.env.DEV
@@ -678,6 +677,7 @@ export default function Phase2Home() {
             Test yesterday feedback popup
           </button>
         )}
+
       </div>
 
       <AnimatePresence>
