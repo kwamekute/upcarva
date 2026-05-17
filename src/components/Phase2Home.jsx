@@ -31,7 +31,12 @@ function MoveCard({ move, acknowledged, onGotIt, onSwap }) {
       <div className="pointer-events-none absolute right-[-34px] top-[-34px] h-[120px] w-[120px] rounded-full bg-[radial-gradient(circle,rgba(124,92,191,0.22),transparent_70%)]" />
       <div className="pointer-events-none absolute bottom-[-30px] left-4 h-[90px] w-[90px] rounded-full bg-[radial-gradient(circle,rgba(249,115,22,0.16),transparent_70%)]" />
 
-      <p className="relative text-[8px] font-bold uppercase tracking-[0.12em] text-[#0db89a]">Today's move</p>
+      <p className="relative text-right text-[8px] font-bold uppercase tracking-[0.12em] text-[#0db89a]">Today's move</p>
+      {move.caption ? (
+        <p className="relative mt-1 text-[10px] font-semibold tracking-[0.04em] text-[#7c6cff]">
+          {move.caption}
+        </p>
+      ) : null}
       <h2
         className={`relative leading-snug tracking-[-0.2px] text-white ${
           acknowledged ? "mt-1 text-[15px]" : "mt-2 text-[19px]"
@@ -613,7 +618,12 @@ export default function Phase2Home() {
           <section className="relative overflow-hidden rounded-[20px] bg-[#111118] p-4 shadow-[0_18px_48px_rgba(15,23,42,0.16)]">
             <div className="pointer-events-none absolute right-[-34px] top-[-34px] h-[120px] w-[120px] rounded-full bg-[radial-gradient(circle,rgba(124,92,191,0.22),transparent_70%)]" />
             <div className="pointer-events-none absolute bottom-[-30px] left-4 h-[90px] w-[90px] rounded-full bg-[radial-gradient(circle,rgba(249,115,22,0.16),transparent_70%)]" />
-            <p className="relative text-[8px] font-bold uppercase tracking-[0.12em] text-[#0db89a]">Today's move</p>
+            <p className="relative text-right text-[8px] font-bold uppercase tracking-[0.12em] text-[#0db89a]">Today's move</p>
+            {selectedMove?.caption ? (
+              <p className="relative mt-1 text-[10px] font-semibold tracking-[0.04em] text-[#7c6cff]">
+                {selectedMove.caption}
+              </p>
+            ) : null}
             <p className="relative mt-2 text-[16px] leading-snug text-white" style={serifStyle}>
               Oops.. seems no moves available yet
             </p>
