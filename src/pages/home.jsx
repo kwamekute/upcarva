@@ -61,101 +61,101 @@ const MOCK_INSIGHTS = {
   //   day: 14,
   //   type: "summary",
   //   is_read: false,
-    // content: {
-    //   level: "day14",
-    //   profile: {
-    //     name: "Kwaw",
-    //     age: 30,
-    //     height: "6'2\" (188cm)",
-    //     est_weight: "~100–115kg",
-    //     goal: "Lean physique & sustained energy",
-    //     period: "April 2026"
-    //   },
-    //   body_composition: {
-    //     body_fat_pct: "28–33%",
-    //     body_fat_plain: "Common for your height and build with gradual gain from early 20s.",
-    //     fat_mass: "~28–38kg",
-    //     fat_mass_plain: "Wide range because weight is an estimate. Weekly logging in Phase 2 sharpens this.",
-    //     lean_mass: "~72–82kg",
-    //     lean_mass_plain: "Your muscle, bone and organs. That lean foundation from before 22 is still there.",
-    //     fat_to_lose: "~18–25kg",
-    //     fat_to_lose_plain: "At 12–15% body fat you'd be back to the lean build from your earlier years.",
-    //     timeline: "8–14 months",
-    //     timeline_plain: "Your height and lean mass mean you can move faster without losing muscle.",
-    //     missing_data_callout: "Your weight. You estimated 100–115kg but never stepped on a scale across 14 days. Weigh yourself once a week in Phase 2 — same time, same conditions, first thing in the morning."
-    //   },
-    //   scores: {
-    //     logging: { value: 100, color: "teal", label: "Logging Consistency", note: "Every single day logged — all 14. Best consistency score in the cohort. Even during a 7-hour bus journey, you logged." },
-    //     detail: { value: 88, color: "purple", label: "Log Detail", note: "Genuinely descriptive logs — mood, hunger, situation. Main gap: quantities. 'A bowl of rice' tells us less than '250g of rice'." },
-    //     timing: { value: 78, color: "blue", label: "Meal Timing", note: "On normal days: excellent. 9–10am breakfast, 4–5pm second meal. Travel days disrupted this noticeably." },
-    //     nutrition: { value: 55, color: "amber", label: "Nutrition Balance", note: "Food choices aren't bad — but heavily weighted toward carbs on travel days and weekends." }
-    //   },
-    //   macros_current: { carbs: 58, protein: 22, fat: 20 },
-    //   macros_target: { carbs: 30, protein: 42, fat: 28 },
-    //   macro_highlight: "Your breakfast is the best meal of the day — protect it. Porridge with 2 eggs and sardine every weekday morning is genuinely strong. The problem isn't your breakfast — the rest of the day doesn't match it yet.",
-    //   patterns: [
-    //     {
-    //       color: "teal",
-    //       title: "Your routine is your biggest advantage — and it's already working",
-    //       body: "Porridge, eggs and sardine at 9–10am every workday. Oiled rice or jollof with chicken at 4–5pm most afternoons. 'Amelia' — your porridge seller — is an unsung hero. The task in Phase 2 is to build the same structure into your second meal."
-    //     },
-    //     {
-    //       color: "amber",
-    //       title: "Travel days completely break your pattern — and that needs a plan",
-    //       body: "Days 8–10 were 7–8 hour bus journeys. 3 disrupted days out of 14 is a 21% disruption rate. Over six months that's significant. Phase 2 includes building a travel eating protocol."
-    //     },
-    //     {
-    //       color: "orange",
-    //       title: "Carbs stack on top of each other without you noticing",
-    //       body: "April 4: bread and eggs, then rice with gravy, then mashed kenkey. Three starchy carbs in one day. The fix: one carb source per day, smaller portion. Protein and vegetables fill the rest."
-    //     },
-    //     {
-    //       color: "purple",
-    //       title: "Your protein is better than most — but your size demands significantly more",
-    //       body: "~80–95g per day currently. You need 155–175g at your weight and height. Add a third egg to breakfast, larger chicken portions at your second meal, sardines on travel days."
-    //     },
-    //     {
-    //       color: "red",
-    //       title: "Hunger headaches are a warning sign your meal gap is too long",
-    //       body: "Mentioned twice. Going more than 6–7 hours without food at your activity level causes a blood sugar drop. Time your two meals so the gap never exceeds this window."
-    //     },
-    //     {
-    //       color: "blue",
-    //       title: "Water doesn't appear once in 14 days of logs",
-    //       body: "Not a single mention across 14 days. For a man of your size, minimum daily intake is 3–4 litres. Mild dehydration causes exactly the headaches you described. This is a free and immediate win."
-    //     }
-    //   ],
-    //   experiments: [
-    //     {
-    //       label: "Exp A",
-    //       color: "teal",
-    //       title: "Build a travel eating protocol",
-    //       body: "Before your next long journey: 3 boiled eggs, a handful of peanuts, a bottle of water. Log it as Meal 1 at your normal time even on a bus. The goal is to keep your two-meal structure intact on travel days."
-    //     },
-    //     {
-    //       label: "Exp B",
-    //       color: "purple",
-    //       title: "One carb source per day",
-    //       body: "For 7 days, allow yourself one starchy carb — rice, yam, plantain, bread or kenkey. Choose the one you want most that day. Protein and vegetables fill the rest of both meals."
-    //     },
-    //     {
-    //       label: "Exp C",
-    //       color: "amber",
-    //       title: "Give your second meal a formula",
-    //       body: "Your breakfast has a formula and never changes. For 7 days, give your second meal one too: protein (chicken or fish) + one carb (smaller) + vegetables. Log whether a formula makes it easier."
-    //     }
-    //   ],
-    //   missing_data_improvements: [
-    //     "Daily or weekly weight — the single most important missing data point",
-    //     "Water intake — log it daily starting with 2.5 litres as a target",
-    //     "Meal quantities — '250g of rice' tells us far more than 'a bowl of rice'",
-    //     "How you felt after meals — energy levels, fullness, cravings 2 hours later",
-    //     "Sleep quality — you logged bedtimes but not how rested you felt",
-    //     "Travel day planning — log what you intend to eat before you travel"
-    //   ],
-    //   closing: "Most people trying to change their eating don't have a consistent breakfast, don't log every day, and don't have a clear structure. You have all three already. Phase 2 is not starting from scratch — it's taking what already works and extending it to the rest of your day. The foundation is solid. Now we build on it.",
-    //   disclaimer: "This is an observational report based on food logs recorded during a 14-day self-reporting period. It is not a medical report or clinical assessment. All figures are approximations based on self-reported data — they are guides, not guarantees. Upcarva is a nutrition coaching and behaviour change programme, not a medical service."
-    // }
+  //   content: {
+  //     level: "day14",
+  //     profile: {
+  //       name: "Kwaw",
+  //       age: 30,
+  //       height: "6'2\" (188cm)",
+  //       est_weight: "~100–115kg",
+  //       goal: "Lean physique & sustained energy",
+  //       period: "April 2026"
+  //     },
+  //     body_composition: {
+  //       body_fat_pct: "28–33%",
+  //       body_fat_plain: "Common for your height and build with gradual gain from early 20s.",
+  //       fat_mass: "~28–38kg",
+  //       fat_mass_plain: "Wide range because weight is an estimate. Weekly logging in Phase 2 sharpens this.",
+  //       lean_mass: "~72–82kg",
+  //       lean_mass_plain: "Your muscle, bone and organs. That lean foundation from before 22 is still there.",
+  //       fat_to_lose: "~18–25kg",
+  //       fat_to_lose_plain: "At 12–15% body fat you'd be back to the lean build from your earlier years.",
+  //       timeline: "8–14 months",
+  //       timeline_plain: "Your height and lean mass mean you can move faster without losing muscle.",
+  //       missing_data_callout: "Your weight. You estimated 100–115kg but never stepped on a scale across 14 days. Weigh yourself once a week in Phase 2 — same time, same conditions, first thing in the morning."
+  //     },
+  //     scores: {
+  //       logging: { value: 100, color: "teal", label: "Logging Consistency", note: "Every single day logged — all 14. Best consistency score in the cohort. Even during a 7-hour bus journey, you logged." },
+  //       detail: { value: 88, color: "purple", label: "Log Detail", note: "Genuinely descriptive logs — mood, hunger, situation. Main gap: quantities. 'A bowl of rice' tells us less than '250g of rice'." },
+  //       timing: { value: 78, color: "blue", label: "Meal Timing", note: "On normal days: excellent. 9–10am breakfast, 4–5pm second meal. Travel days disrupted this noticeably." },
+  //       nutrition: { value: 55, color: "amber", label: "Nutrition Balance", note: "Food choices aren't bad — but heavily weighted toward carbs on travel days and weekends." }
+  //     },
+  //     macros_current: { carbs: 58, protein: 22, fat: 20 },
+  //     macros_target: { carbs: 30, protein: 42, fat: 28 },
+  //     macro_highlight: "Your breakfast is the best meal of the day — protect it. Porridge with 2 eggs and sardine every weekday morning is genuinely strong. The problem isn't your breakfast — the rest of the day doesn't match it yet.",
+  //     patterns: [
+  //       {
+  //         color: "teal",
+  //         title: "Your routine is your biggest advantage — and it's already working",
+  //         body: "Porridge, eggs and sardine at 9–10am every workday. Oiled rice or jollof with chicken at 4–5pm most afternoons. 'Amelia' — your porridge seller — is an unsung hero. The task in Phase 2 is to build the same structure into your second meal."
+  //       },
+  //       {
+  //         color: "amber",
+  //         title: "Travel days completely break your pattern — and that needs a plan",
+  //         body: "Days 8–10 were 7–8 hour bus journeys. 3 disrupted days out of 14 is a 21% disruption rate. Over six months that's significant. Phase 2 includes building a travel eating protocol."
+  //       },
+  //       {
+  //         color: "orange",
+  //         title: "Carbs stack on top of each other without you noticing",
+  //         body: "April 4: bread and eggs, then rice with gravy, then mashed kenkey. Three starchy carbs in one day. The fix: one carb source per day, smaller portion. Protein and vegetables fill the rest."
+  //       },
+  //       {
+  //         color: "purple",
+  //         title: "Your protein is better than most — but your size demands significantly more",
+  //         body: "~80–95g per day currently. You need 155–175g at your weight and height. Add a third egg to breakfast, larger chicken portions at your second meal, sardines on travel days."
+  //       },
+  //       {
+  //         color: "red",
+  //         title: "Hunger headaches are a warning sign your meal gap is too long",
+  //         body: "Mentioned twice. Going more than 6–7 hours without food at your activity level causes a blood sugar drop. Time your two meals so the gap never exceeds this window."
+  //       },
+  //       {
+  //         color: "blue",
+  //         title: "Water doesn't appear once in 14 days of logs",
+  //         body: "Not a single mention across 14 days. For a man of your size, minimum daily intake is 3–4 litres. Mild dehydration causes exactly the headaches you described. This is a free and immediate win."
+  //       }
+  //     ],
+  //     experiments: [
+  //       {
+  //         label: "Exp A",
+  //         color: "teal",
+  //         title: "Build a travel eating protocol",
+  //         body: "Before your next long journey: 3 boiled eggs, a handful of peanuts, a bottle of water. Log it as Meal 1 at your normal time even on a bus. The goal is to keep your two-meal structure intact on travel days."
+  //       },
+  //       {
+  //         label: "Exp B",
+  //         color: "purple",
+  //         title: "One carb source per day",
+  //         body: "For 7 days, allow yourself one starchy carb — rice, yam, plantain, bread or kenkey. Choose the one you want most that day. Protein and vegetables fill the rest of both meals."
+  //       },
+  //       {
+  //         label: "Exp C",
+  //         color: "amber",
+  //         title: "Give your second meal a formula",
+  //         body: "Your breakfast has a formula and never changes. For 7 days, give your second meal one too: protein (chicken or fish) + one carb (smaller) + vegetables. Log whether a formula makes it easier."
+  //       }
+  //     ],
+  //     missing_data_improvements: [
+  //       "Daily or weekly weight — the single most important missing data point",
+  //       "Water intake — log it daily starting with 2.5 litres as a target",
+  //       "Meal quantities — '250g of rice' tells us far more than 'a bowl of rice'",
+  //       "How you felt after meals — energy levels, fullness, cravings 2 hours later",
+  //       "Sleep quality — you logged bedtimes but not how rested you felt",
+  //       "Travel day planning — log what you intend to eat before you travel"
+  //     ],
+  //     closing: "Most people trying to change their eating don't have a consistent breakfast, don't log every day, and don't have a clear structure. You have all three already. Phase 2 is not starting from scratch — it's taking what already works and extending it to the rest of your day. The foundation is solid. Now we build on it.",
+  //     disclaimer: "This is an observational report based on food logs recorded during a 14-day self-reporting period. It is not a medical report or clinical assessment. All figures are approximations based on self-reported data — they are guides, not guarantees. Upcarva is a nutrition coaching and behaviour change programme, not a medical service."
+  //   }
   }
 //}
 

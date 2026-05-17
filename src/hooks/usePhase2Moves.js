@@ -48,7 +48,7 @@ export function usePhase2Moves({ userId, enabled }) {
     const [{ data: movesData, error: movesError }, { data: attemptsData, error: attemptsError }] = await Promise.all([
       supabase
         .from("user_moves")
-        .select("id,user_id,status,priority_score,assigned_at,updated_at,title,subtext")
+        .select("id,user_id,status,priority_score,assigned_at,updated_at,title,subtext,caption")
         .eq("user_id", userId)
         .in("status", ["available", "active"])
         .order("priority_score", { ascending: false })
@@ -89,6 +89,7 @@ export function usePhase2Moves({ userId, enabled }) {
     if (activeMove) {
       return {
         ...activeMove,
+        caption: activeMove.caption || null,
         title: activeMove.title || "Today's move",
         subtext: activeMove.subtext || "One small win today."
       }
@@ -100,6 +101,7 @@ export function usePhase2Moves({ userId, enabled }) {
       const move = availableMoves[(phase2Day - 1 + swapOffset) % availableMoves.length]
       return {
         ...move,
+        caption: move.caption || null,
         title: move.title || "Today's move",
         subtext: move.subtext || "One small win today."
       }
