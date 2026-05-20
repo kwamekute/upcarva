@@ -26,6 +26,9 @@ const currentMonthStart = () => {
   return new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split("T")[0]
 }
 
+const feedbackDismissKey = (userId, attemptId) =>
+  `upcarva_phase2_feedback_dismissed_${userId || "demo"}_${attemptId}`
+
 export function usePhase2Moves({ userId, enabled }) {
   const [loading, setLoading] = useState(true)
   const [userMoves, setUserMoves] = useState([])
@@ -35,7 +38,6 @@ export function usePhase2Moves({ userId, enabled }) {
   const [forceFeedbackOpen, setForceFeedbackOpen] = useState(false)
   const today = todayKey()
   const yesterday = offsetDate(-1)
-  const dismissKey = `upcarva_phase2_feedback_dismissed_${userId || "demo"}_${yesterday}`
 
   const fetchMoves = useCallback(async () => {
     if (!enabled || !userId) {
@@ -50,7 +52,6 @@ export function usePhase2Moves({ userId, enabled }) {
         .from("user_moves")
         .select("id,user_id,status,priority_score,assigned_at,updated_at,title,subtext,caption")
         .eq("user_id", userId)
-        .in("status", ["available", "active"])
         .order("priority_score", { ascending: false })
         .order("assigned_at", { ascending: true }),
       supabase
@@ -148,14 +149,19 @@ export function usePhase2Moves({ userId, enabled }) {
     return null
   }, [attempts, yesterday, enrichAttempt])
 
+  const dismissKeyForAttempt = yesterdayAttempt?.id
+    ? feedbackDismissKey(userId, yesterdayAttempt.id)
+    : null
   const persistedDismissed =
-    typeof window !== "undefined" && localStorage.getItem(dismissKey) === "true"
+    typeof window !== "undefined" &&
+    dismissKeyForAttempt
+      ? localStorage.getItem(dismissKeyForAttempt) === "true"
+      : false
   const shouldAskYesterday =
     !loading &&
     (
       forceFeedbackOpen ||
       (
-        phase2Day > 1 &&
         yesterdayAttempt?.completion_status === "pending" &&
         !dismissedFeedback &&
         !persistedDismissed
@@ -205,8 +211,7 @@ export function usePhase2Moves({ userId, enabled }) {
 
   const submitFeedback = async (status, partlyReason = null) => {
     if (!yesterdayAttempt) {
-      setDismissedFeedback(true)
-      return
+      return false
     }
 
     const { error } = await supabase
@@ -221,7 +226,7 @@ export function usePhase2Moves({ userId, enabled }) {
 
     if (error) {
       console.error("Could not save move feedback:", error)
-      return
+      return false
     }
 
     let nextMoveStatus = "paused"
@@ -240,10 +245,14 @@ export function usePhase2Moves({ userId, enabled }) {
       console.error("Could not update move status:", moveStatusError)
     }
 
+    // Mark this feedback date as handled immediately so the popup doesn't loop
+    // even if duplicate pending rows exist for the same day.
     setDismissedFeedback(true)
     setForceFeedbackOpen(false)
-    localStorage.setItem(dismissKey, "true")
+    if (dismissKeyForAttempt) localStorage.setItem(dismissKeyForAttempt, "true")
+
     fetchMoves()
+    return true
   }
 
   const seedDemoYesterday = async () => {
@@ -268,7 +277,9 @@ export function usePhase2Moves({ userId, enabled }) {
 
     setDismissedFeedback(false)
     setForceFeedbackOpen(false)
-    localStorage.removeItem(dismissKey)
+    if (todayAttempt?.id) {
+      localStorage.removeItem(feedbackDismissKey(userId, todayAttempt.id))
+    }
     fetchMoves()
   }
 
@@ -282,6 +293,24 @@ export function usePhase2Moves({ userId, enabled }) {
     const partly = combined.filter((attempt) => attempt.completion_status === "partly").length
     return { days: combined, completed, partly, total: Math.max(combined.length, 1) }
   }, [attempts])
+
+  const completedSummary = useMemo(() => {
+    const now = new Date()
+    const weekAgo = new Date(now)
+    weekAgo.setDate(now.getDate() - 7)
+
+    const completedMoves = userMoves.filter((move) => move.status === "completed")
+    const completedThisWeek = completedMoves.filter((move) => {
+      if (!move.updated_at) return false
+      const updatedAt = new Date(move.updated_at)
+      return !Number.isNaN(updatedAt.getTime()) && updatedAt >= weekAgo
+    }).length
+
+    return {
+      totalCompleted: completedMoves.length,
+      weeklyCompleted: completedThisWeek
+    }
+  }, [userMoves])
 
   const monthSummary = useMemo(() => {
     const combined = attempts
@@ -311,6 +340,7 @@ export function usePhase2Moves({ userId, enabled }) {
     yesterdayAttempt,
     shouldAskYesterday,
     weekSummary,
+    completedSummary,
     monthSummary,
     acceptTodayMove,
     submitFeedback,
@@ -318,7 +348,7 @@ export function usePhase2Moves({ userId, enabled }) {
     skipFeedback: () => {
       setDismissedFeedback(true)
       setForceFeedbackOpen(false)
-      localStorage.setItem(dismissKey, "true")
+      if (dismissKeyForAttempt) localStorage.setItem(dismissKeyForAttempt, "true")
     },
     seedDemoYesterday
   }

@@ -90,16 +90,250 @@ function MoveCard({ move, acknowledged, onGotIt, onSwap }) {
   )
 }
 
-function FeedbackPopup({ attempt, onSubmit }) {
+function CelebrationSheet({ status, move, weekCompleted, isFirstEverCompletion, onClose }) {
+  const configs = {
+    did_it: {
+      icon: null,
+      bg: "linear-gradient(160deg, #0a1a14 0%, #111118 100%)",
+      headline: isFirstEverCompletion ? "You did it" : "You did it again!",
+      sub: isFirstEverCompletion
+        ? "You completed your first move, this is how real change begins"
+        : "This is how small changes start becoming patterns.",
+      accentColor: "#0db89a",
+      ctaLabel: "See today's moves ->",
+      showRing: true
+    },
+    partly: {
+      icon: "⚡",
+      bg: "linear-gradient(160deg, #1a1000 0%, #111118 100%)",
+      headline: "You tried.\nThat counts.",
+      sub: "Showing up halfway is still showing up.",
+      accentColor: "#f59e0b",
+      cardBg: "rgba(245,158,11,0.1)",
+      cardBorder: "rgba(245,158,11,0.2)",
+      cardText:
+        "You were amazing for trying. Partial effort is how full effort starts. Let's go after it again tomorrow - you're closer than you think.",
+      ctaLabel: "See today's moves ->",
+      showRing: false
+    },
+    not_today: {
+      icon: "💜",
+      bg: "linear-gradient(160deg, #0f0a18 0%, #111118 100%)",
+      headline: "You still showed up.",
+      sub: "Not every day is a win day.\nComing back is what matters.",
+      accentColor: "#a78bfa",
+      cardBg: "rgba(124,92,191,0.12)",
+      cardBorder: "rgba(124,92,191,0.2)",
+      cardText:
+        "You opened the app. You checked in. That's not nothing - that's the habit. The move comes back tomorrow, no judgment.",
+      ctaLabel: "See today's moves ->",
+      showRing: false
+    }
+  }
+
+  const cfg = configs[status]
+  const [ringFull, setRingFull] = useState(false)
+  const [checkIn, setCheckIn] = useState(false)
+  const circumference = 2 * Math.PI * 35
+
+  useEffect(() => {
+    if (status === "did_it") {
+      const t1 = window.setTimeout(() => setRingFull(true), 220)
+      const t2 = window.setTimeout(() => setCheckIn(true), 980)
+      return () => {
+        window.clearTimeout(t1)
+        window.clearTimeout(t2)
+      }
+    }
+  }, [status])
+
+  if (!cfg) return null
+
+  return (
+    <motion.div
+      className="fixed inset-0 z-[70] flex items-center justify-center backdrop-blur-[3px]"
+      style={{ background: "rgba(10,10,18,0.52)" }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.25 }}
+    >
+      <motion.div
+        className="flex flex-col items-center rounded-[26px] border border-white/10 px-6 py-7 text-center shadow-[0_28px_90px_rgba(0,0,0,0.45)]"
+        style={{ background: cfg.bg }}
+        initial={{ opacity: 0, y: 18, scale: 0.96 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: 14, scale: 0.96 }}
+        transition={{ duration: 0.42, ease: "easeOut" }}
+      >
+        {cfg.showRing && (
+          <div className="relative mb-3 h-20 w-20">
+            <svg className="absolute inset-0" width="80" height="80" viewBox="0 0 80 80" style={{ transform: "rotate(-90deg)" }}>
+              <circle cx="40" cy="40" r="35" fill="none" stroke="rgba(13,184,154,0.15)" strokeWidth="5" />
+              <motion.circle
+                cx="40"
+                cy="40"
+                r="35"
+                fill="none"
+                stroke="#0db89a"
+                strokeWidth="5"
+                strokeLinecap="round"
+                strokeDasharray={circumference}
+                strokeDashoffset={circumference}
+                animate={{ strokeDashoffset: ringFull ? 0 : circumference }}
+                transition={{ duration: 1.15, ease: [0.22, 1, 0.36, 1] }}
+              />
+            </svg>
+            <motion.div
+              className="absolute inset-0 flex items-center justify-center text-[26px] text-white"
+              initial={{ scale: 0.2, opacity: 0, y: -22, rotate: -10 }}
+              animate={
+                checkIn
+                  ? { scale: [0.2, 1.62, 0.88, 1.18, 1], opacity: 1, y: [-22, 12, -4, 1, 0], rotate: [-10, 8, -4, 1, 0] }
+                  : { scale: 0.2, opacity: 0 }
+              }
+              transition={{ duration: 1.05, times: [0, 0.42, 0.68, 0.86, 1], ease: "easeOut" }}
+            >
+              ✓
+            </motion.div>
+          </div>
+        )}
+
+        {cfg.icon && (
+          <motion.div
+            className="mb-3 text-[40px]"
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ type: "spring", stiffness: 280, delay: 0.1 }}
+          >
+            {cfg.icon}
+          </motion.div>
+        )}
+
+        <motion.h2
+          className="mb-2 text-[22px] leading-tight text-white"
+          style={serifStyle}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: status === "did_it" ? 0.3 : 0.2, duration: 0.35 }}
+        >
+          {cfg.headline.split("\n").map((line, i) => (
+            <span key={i}>
+              {line}
+              {i === 0 && cfg.headline.includes("\n") && <br />}
+            </span>
+          ))}
+        </motion.h2>
+
+        <motion.p
+          className="mb-4 text-[11px] leading-relaxed"
+          style={{ color: "rgba(255,255,255,0.45)" }}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: status === "did_it" ? 0.45 : 0.35, duration: 0.35 }}
+        >
+          {cfg.sub.split("\n").map((line, i) => (
+            <span key={i}>
+              {line}
+              {i === 0 && cfg.sub.includes("\n") && <br />}
+            </span>
+          ))}
+        </motion.p>
+
+        {status === "did_it" && !isFirstEverCompletion && (
+          <motion.div
+            className="mb-4 flex items-center gap-2 rounded-full px-4 py-2"
+            style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.1)" }}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.55 }}
+          >
+            <span className="text-sm">⚡</span>
+            <span className="text-[16px] font-bold text-white">{weekCompleted}</span>
+            <span className="text-[10px]" style={{ color: "rgba(255,255,255,0.4)" }}>
+              moves this week
+            </span>
+          </motion.div>
+        )}
+
+        {status === "partly" && (
+          <motion.div
+            className="mb-4 h-1.5 w-40 overflow-hidden rounded-full"
+            style={{ background: "rgba(255,255,255,0.1)" }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.4 }}
+          >
+            <motion.div
+              className="h-full rounded-full"
+              style={{ background: "#f59e0b" }}
+              initial={{ width: 0 }}
+              animate={{ width: "60%" }}
+              transition={{ duration: 0.8, delay: 0.5, ease: [0.34, 1.56, 0.64, 1] }}
+            />
+          </motion.div>
+        )}
+
+        {status === "not_today" && (
+          <motion.div
+            className="mb-4 rounded-full px-4 py-2 text-[10px]"
+            style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.4)" }}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+          >
+            Tomorrow's move resets fresh for you.
+          </motion.div>
+        )}
+
+        {cfg.cardText && (
+          <motion.div
+            className="mb-5 max-w-xs rounded-xl px-4 py-3"
+            style={{ background: cfg.cardBg, border: `1px solid ${cfg.cardBorder}` }}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: status === "partly" ? 0.55 : 0.35 }}
+          >
+            <p className="text-[11px] leading-relaxed" style={{ color: "rgba(255,255,255,0.6)" }}>
+              {cfg.cardText}
+            </p>
+          </motion.div>
+        )}
+
+        <motion.button
+          onClick={onClose}
+          className="rounded-xl px-8 py-3 text-[12px] font-bold"
+          style={{ background: "white", color: "#111118", border: "none", cursor: "pointer" }}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: status === "did_it" ? 0.75 : 0.65 }}
+          whileTap={{ scale: 0.97 }}
+        >
+          {cfg.ctaLabel}
+        </motion.button>
+      </motion.div>
+    </motion.div>
+  )
+}
+
+function FeedbackPopup({ attempt, weekCompleted, totalCompletedBase, onSubmit, onSkip }) {
   const title = attempt?.title || "Your move from yesterday."
   const [selectedStatus, setSelectedStatus] = useState(null)
   const [partlyReason, setPartlyReason] = useState("")
+  const [celebrationStatus, setCelebrationStatus] = useState(null)
+  const [isFirstEverCompletion, setIsFirstEverCompletion] = useState(false)
 
   const handleResponse = (status) => {
     setSelectedStatus(status)
 
     if (status !== "partly") {
-      window.setTimeout(() => onSubmit(status), 240)
+      window.setTimeout(async () => {
+        const ok = await onSubmit(status)
+        if (ok) {
+          setIsFirstEverCompletion(status === "did_it" && totalCompletedBase === 0)
+          setCelebrationStatus(status)
+        }
+      }, 240)
     }
   }
 
@@ -175,13 +409,25 @@ function FeedbackPopup({ attempt, onSubmit }) {
               />
               <div className="mt-2 grid grid-cols-[1fr_auto] gap-2">
                 <button
-                  onClick={() => onSubmit("partly", partlyReason.trim() || null)}
+                  onClick={async () => {
+                    const ok = await onSubmit("partly", partlyReason.trim() || null)
+                    if (ok) {
+                      setIsFirstEverCompletion(false)
+                      setCelebrationStatus("partly")
+                    }
+                  }}
                   className="rounded-xl bg-[#f59e0b] px-4 py-2.5 text-[12px] font-bold text-white"
                 >
                   Save response
                 </button>
                 <button
-                  onClick={() => onSubmit("partly")}
+                  onClick={async () => {
+                    const ok = await onSubmit("partly")
+                    if (ok) {
+                      setIsFirstEverCompletion(false)
+                      setCelebrationStatus("partly")
+                    }
+                  }}
                   className="rounded-xl border border-[#e8e6e1] px-3 py-2.5 text-[12px] font-semibold text-[#8a8a9a]"
                 >
                   Skip note
@@ -195,6 +441,22 @@ function FeedbackPopup({ attempt, onSubmit }) {
           Your answer helps personalize tomorrow.
         </p>
       </motion.div>
+
+      <AnimatePresence>
+        {celebrationStatus && (
+          <CelebrationSheet
+            status={celebrationStatus}
+            move={attempt}
+            weekCompleted={weekCompleted}
+            isFirstEverCompletion={isFirstEverCompletion}
+            onClose={() => {
+              setCelebrationStatus(null)
+              setIsFirstEverCompletion(false)
+              onSkip()
+            }}
+          />
+        )}
+      </AnimatePresence>
     </motion.div>
   )
 }
@@ -437,6 +699,7 @@ export default function Phase2Home() {
   const [showLogSheet, setShowLogSheet] = useState(false)
   const [toastMsg, setToastMsg] = useState("")
   const [toastVisible, setToastVisible] = useState(false)
+  const [feedbackSessionOpen, setFeedbackSessionOpen] = useState(false)
 
   const {
     loading,
@@ -446,10 +709,12 @@ export default function Phase2Home() {
     yesterdayAttempt,
     shouldAskYesterday,
     weekSummary,
+    completedSummary,
     acceptTodayMove,
     submitFeedback,
     swapMove,
-    seedDemoYesterday
+    seedDemoYesterday,
+    skipFeedback
   } = usePhase2Moves({ userId: profile?.auth_id, enabled: true })
   const demoControls = import.meta.env.DEV
   const momentumLabel = streak >= 7 ? "Strong" : streak >= 3 ? "building fast" : "Building"
@@ -470,6 +735,12 @@ export default function Phase2Home() {
   }
 
   const isHydrated = !loading
+
+  useEffect(() => {
+    if (isHydrated && shouldAskYesterday) {
+      setFeedbackSessionOpen(true)
+    }
+  }, [isHydrated, shouldAskYesterday])
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-[#f6f7fb] px-4 pb-24 py-5">
@@ -548,13 +819,13 @@ export default function Phase2Home() {
   
                 <span className="whitespace-nowrap text-[9px] text-[#8a8a9a] flex items-center gap-1">
                   <motion.span
-                    key={weekSummary.completed}
+                    key={completedSummary.totalCompleted}
                     initial={{ scale: 0.8 }}
                     animate={{ scale: 1 }}
                     transition={{ duration: 0.25 }}
                     className="text-[11px] font-bold text-teal-500"
                   >
-                    {weekSummary.completed}
+                    {completedSummary.totalCompleted}
                   </motion.span>
                   <span>moves completed</span>
                 </span>
@@ -605,7 +876,7 @@ export default function Phase2Home() {
         {selectedMove ? (
           <MoveCard
             move={selectedMove}
-            acknowledged={!!todayAttempt}
+            acknowledged={!!todayAttempt || selectedMove?.status === "active"}
             onGotIt={() => {
               acceptTodayMove()
               showToast("Move saved for today.")
@@ -691,12 +962,17 @@ export default function Phase2Home() {
       </div>
 
       <AnimatePresence>
-        {isHydrated && shouldAskYesterday && (  
+        {isHydrated && (shouldAskYesterday || feedbackSessionOpen) && (  
           <FeedbackPopup
             attempt={yesterdayAttempt}
-            onSubmit={(status, partlyReason) => {
-              submitFeedback(status, partlyReason)
-              showToast("Thanks. Tomorrow gets smarter.")
+            weekCompleted={completedSummary.weeklyCompleted}
+            totalCompletedBase={completedSummary.totalCompleted}
+            onSubmit={async (status, partlyReason) => {
+              return await submitFeedback(status, partlyReason)
+            }}
+            onSkip={() => {
+              skipFeedback()
+              setFeedbackSessionOpen(false)
             }}
           />
         )}
