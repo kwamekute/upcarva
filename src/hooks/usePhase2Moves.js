@@ -36,6 +36,7 @@ export function usePhase2Moves({ userId, enabled }) {
   const [swapOffset, setSwapOffset] = useState(0)
   const [dismissedFeedback, setDismissedFeedback] = useState(false)
   const [forceFeedbackOpen, setForceFeedbackOpen] = useState(false)
+  const [userCreatedMove, setUserCreatedMove] = useState(null)
   const today = todayKey()
   const yesterday = offsetDate(-1)
 
@@ -65,10 +66,22 @@ export function usePhase2Moves({ userId, enabled }) {
     if (movesError) console.error("Could not load user moves:", movesError)
     if (attemptsError) console.error("Could not load move attempts:", attemptsError)
 
+    const { data: createdMoveData, error: createdMoveError } = await supabase
+      .from("user_created_moves")
+      .select("id,user_id,move,created_at,cycle_date")
+      .eq("user_id", userId)
+      .eq("cycle_date", today)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle()
+
+    if (createdMoveError) console.error("Could not load user-created move:", createdMoveError)
+
     setUserMoves(movesData || [])
     setAttempts(attemptsData || [])
+    setUserCreatedMove(createdMoveData || null)
     setLoading(false)
-  }, [enabled, userId])
+  }, [enabled, userId, today])
 
   useEffect(() => {
     fetchMoves()
@@ -342,6 +355,26 @@ export function usePhase2Moves({ userId, enabled }) {
     weekSummary,
     completedSummary,
     monthSummary,
+    userCreatedMove,
+    createSaturdayMove: async (moveText) => {
+      if (!userId || !moveText?.trim()) return false
+      const { error } = await supabase.from("user_created_moves").upsert(
+        [
+          {
+            user_id: userId,
+            move: moveText.trim(),
+            cycle_date: today
+          }
+        ],
+        { onConflict: "user_id,cycle_date" }
+      )
+      if (error) {
+        console.error("Could not save Saturday move:", error)
+        return false
+      }
+      await fetchMoves()
+      return true
+    },
     acceptTodayMove,
     submitFeedback,
     swapMove: () => setSwapOffset((value) => value + 1),

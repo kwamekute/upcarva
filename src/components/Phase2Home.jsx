@@ -700,6 +700,9 @@ export default function Phase2Home() {
   const [toastMsg, setToastMsg] = useState("")
   const [toastVisible, setToastVisible] = useState(false)
   const [feedbackSessionOpen, setFeedbackSessionOpen] = useState(false)
+  const [weekendMoveInput, setWeekendMoveInput] = useState("")
+  const [savingWeekendMove, setSavingWeekendMove] = useState(false)
+  const [devDayOverride, setDevDayOverride] = useState("")
 
   const {
     loading,
@@ -710,6 +713,8 @@ export default function Phase2Home() {
     shouldAskYesterday,
     weekSummary,
     completedSummary,
+    userCreatedMove,
+    createSaturdayMove,
     acceptTodayMove,
     submitFeedback,
     swapMove,
@@ -717,11 +722,31 @@ export default function Phase2Home() {
     skipFeedback
   } = usePhase2Moves({ userId: profile?.auth_id, enabled: true })
   const demoControls = import.meta.env.DEV
+  const getEffectiveDate = () => {
+    if (demoControls && devDayOverride === "sat") {
+      const d = new Date()
+      const diff = (6 - d.getDay() + 7) % 7
+      d.setDate(d.getDate() + diff)
+      return d
+    }
+    if (demoControls && devDayOverride === "sun") {
+      const d = new Date()
+      const diff = (7 - d.getDay()) % 7
+      d.setDate(d.getDate() + diff)
+      return d
+    }
+    return new Date()
+  }
+  const effectiveDate = getEffectiveDate()
+  const dayOfWeek = effectiveDate.getDay() // 0 Sun, 6 Sat
+  const isSaturday = dayOfWeek === 6
+  const isSunday = dayOfWeek === 0
   const momentumLabel = streak >= 7 ? "Strong" : streak >= 3 ? "building fast" : "Building"
   const firstName = profile?.name?.trim()?.split(" ")[0] || ""
   const momentumMessage = `you are ${momentumLabel}!`
   const winsUntilClick = Math.max(2, 4 - weekSummary.completed)
   const winCopy = winsUntilClick === 2 ? "2-3" : winsUntilClick
+  const phase2Week = Math.max(1, Math.floor((phase2Day - 1) / 7) + 1)
 
   useEffect(() => {
     if (!toastVisible) return
@@ -732,6 +757,17 @@ export default function Phase2Home() {
   const showToast = (message) => {
     setToastMsg(message)
     setToastVisible(true)
+  }
+
+  const handleSaveSaturdayMove = async () => {
+    if (!weekendMoveInput.trim() || savingWeekendMove) return
+    setSavingWeekendMove(true)
+    const ok = await createSaturdayMove(weekendMoveInput)
+    setSavingWeekendMove(false)
+    if (ok) {
+      setWeekendMoveInput("")
+      showToast("Saturday move saved.")
+    }
   }
 
   const isHydrated = !loading
@@ -756,6 +792,7 @@ export default function Phase2Home() {
           isHydrated && shouldAskYesterday ? "opacity-60" : "opacity-100"
         }`}
       >
+        {!isSunday && (
         <motion.header
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -872,8 +909,133 @@ export default function Phase2Home() {
             </div>
           </div>
         </motion.header>
+        )}
 
-        {selectedMove ? (
+        {isSunday ? (
+          <>
+          <section className="rounded-[18px] border border-white/80 bg-white/75 p-4 shadow-[0_18px_48px_rgba(15,23,42,0.07)] backdrop-blur-xl">
+            <div className="flex items-start justify-between gap-2.5">
+              <div>
+                <p className="text-[12px] font-medium leading-relaxed text-[#2a2a38]">
+                  {firstName || "You"}, you completed Week {phase2Week}!
+                  <br></br> let the week settle.
+                </p>
+              </div>
+              <div className="whitespace-nowrap rounded-full border border-[#bbf7d0] bg-[#f0fdf9] px-2.5 py-1">
+                <span className="text-[12px] font-bold text-[#15803d]">{completedSummary.weeklyCompleted}/6</span>
+                <span className="ml-1 text-[9px] text-[#15803d]">moves</span>
+              </div>
+            </div>
+          </section>
+
+          <section className="rounded-[22px] border border-[#0db89a]/20 bg-[linear-gradient(180deg,#ffffff_0%,#f7fffc_100%)] p-[20px] shadow-[0_18px_40px_rgba(15,23,42,0.06)]">
+            <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-2xl border border-[#0db89a]/20 bg-[#0db89a]/10 text-[22px]">
+              🌤
+            </div>
+            <h2 className="text-center text-[23px] leading-[1.2] text-[#111118]" style={serifStyle}>
+              Let the week settle.
+            </h2>
+            <p className="mx-auto mt-2 max-w-[245px] text-center text-[11px] leading-[1.65] text-[#8a8a9a]">
+              No move today. Just log honestly and notice what felt easier, harder, or different.
+            </p>
+
+            <div className="mx-auto mt-3 flex w-full justify-center">
+              <div className="inline-flex items-center gap-1.5 rounded-full border border-[#0db89a]/20 bg-[#0db89a]/10 px-2.5 py-1.5 text-[10px] font-bold text-[#0f766e]">
+                <span>✓</span>
+                <span className="text-center">This week, you completed {completedSummary.weeklyCompleted} of 6 moves.</span>
+              </div>
+            </div>
+
+            <div className="mt-3.5 flex justify-center gap-[5px]">
+              {Array.from({ length: 6 }).map((_, idx) => {
+                const isCompleted = idx < completedSummary.weeklyCompleted
+                return (
+                  <span
+                    key={idx}
+                    className={`h-2 w-[29px] rounded-full ${isCompleted ? "bg-[#0db89a]" : "bg-[#f59e0b]/65"}`}
+                  />
+                )
+              })}
+            </div>
+
+            <div className="mt-4 rounded-[15px] border border-[#7c5cbf]/20 bg-[#7c5cbf]/10 px-3 py-2.5 text-left text-[11px] leading-[1.55] text-[#111118]">
+              <strong className="mb-1 block text-[10px] text-[#7c5cbf]">Something to sit with</strong>
+              Which move felt most natural this week? That may be the one your body is ready to build from.
+            </div>
+          </section>
+
+          <section className="rounded-[18px] border border-white/80 bg-white/75 p-4 shadow-[0_18px_48px_rgba(15,23,42,0.07)] backdrop-blur-xl">
+            <p className="text-[8px] font-bold uppercase tracking-[0.12em] text-[#7c5cbf]">Monday preview</p>
+            <div className="mt-2 flex items-center gap-2.5">
+              <div className="flex h-[38px] w-[38px] flex-shrink-0 items-center justify-center rounded-xl border border-[#7c5cbf]/20 bg-[#7c5cbf]/10 text-[17px]">
+                💡
+              </div>
+              <div>
+                <p className="text-[11px] font-bold text-[#111118]">New move arrives tomorrow.</p>
+                <p className="mt-1 text-[10px] leading-[1.45] text-[#8a8a9a]">
+                  It will be based on what showed up this week.
+                </p>
+              </div>
+            </div>
+          </section>
+          </>
+        ) : isSaturday ? (
+          <>
+          <section className="relative overflow-hidden rounded-[20px] border border-[#f59e0b]/30 bg-[#fffaf0] p-4 shadow-[0_18px_48px_rgba(15,23,42,0.07)]">
+            <p className="text-[8px] font-bold uppercase tracking-[0.12em] text-[#f59e0b]">Saturday move - written by you</p>
+            <h2 className="mt-1 text-[18px] leading-snug text-[#111118]" style={serifStyle}>
+              {userCreatedMove?.move ? "Your Saturday move is set." : "What's one thing you want to try today?"}
+            </h2>
+            {!userCreatedMove?.move ? (
+              <p className="mt-1 text-[10px] italic leading-relaxed text-[#8a8a9a]">
+                Not perfect.
+                <br />
+                Not extreme.
+                <br />
+                Just something that feels realistic for where you are right now.
+              </p>
+            ) : null}
+            {userCreatedMove?.move ? (
+              <div className="mt-2 rounded-xl border border-[#f59e0b]/25 bg-white px-3 py-2.5">
+                <p className="text-[12px] font-medium text-[#2a2a38]">{userCreatedMove.move}</p>
+                <p className="mt-1 text-[10px] text-[#8a8a9a]">Locked in. You chose this one.</p>
+              </div>
+            ) : (
+              <>
+                <input
+                  value={weekendMoveInput}
+                  onChange={(event) => setWeekendMoveInput(event.target.value)}
+                  placeholder="e.g. Drink 2 litres of water today"
+                  className="mt-2 w-full rounded-xl border border-[#f59e0b]/35 bg-white px-3 py-2.5 text-[12px] text-[#111118] outline-none focus:border-[#f59e0b]"
+                />
+                <div className="mt-2 grid grid-cols-2 gap-2">
+                  <button
+                    onClick={() => showToast("Saturday skipped. You can still log meals.")}
+                    className="rounded-xl border border-slate-200 py-2.5 text-[11px] font-semibold text-slate-500"
+                  >
+                    Skip today
+                  </button>
+                  <button
+                    onClick={handleSaveSaturdayMove}
+                    disabled={!weekendMoveInput.trim() || savingWeekendMove}
+                    className="rounded-xl bg-[#0db89a] py-2.5 text-[11px] font-bold text-[#111118] disabled:opacity-40"
+                  >
+                    {savingWeekendMove ? "Saving..." : "Set my move ->"}
+                  </button>
+                </div>
+              </>
+            )}
+          </section>
+          <section className="rounded-[18px] border border-white/80 bg-white/75 p-4 shadow-[0_18px_48px_rgba(15,23,42,0.07)] backdrop-blur-xl">
+            <p className="text-[8px] font-bold uppercase tracking-[0.12em] text-[#8a8a9a]">Why Saturdays feel different</p>
+            <div className="mt-2 space-y-1.5">
+              <p className="text-[10px] leading-relaxed text-[#2a2a38]"><span className="font-bold text-[#0db89a]">✓</span> Weekdays help you notice patterns.</p>
+              <p className="text-[10px] leading-relaxed text-[#2a2a38]"><span className="font-bold text-[#f59e0b]">★</span> Saturdays help you build ownership.</p>
+              <p className="text-[10px] leading-relaxed text-[#2a2a38]"><span className="font-bold text-[#7c5cbf]">◉</span> Sundays are for reflection. Monday resets the calibration.</p>
+            </div>
+          </section>
+          </>
+        ) : selectedMove ? (
           <MoveCard
             move={selectedMove}
             acknowledged={!!todayAttempt || selectedMove?.status === "active"}
@@ -951,6 +1113,29 @@ export default function Phase2Home() {
         </motion.div>
 
         {demoControls && (
+          <div className="grid w-full grid-cols-3 gap-2">
+            <button
+              onClick={() => setDevDayOverride("")}
+              className={`rounded-xl border py-2 text-[10px] font-semibold ${devDayOverride === "" ? "border-slate-700 bg-slate-700 text-white" : "border-slate-300 text-slate-500"}`}
+            >
+              Prod day
+            </button>
+            <button
+              onClick={() => setDevDayOverride("sat")}
+              className={`rounded-xl border py-2 text-[10px] font-semibold ${devDayOverride === "sat" ? "border-slate-700 bg-slate-700 text-white" : "border-slate-300 text-slate-500"}`}
+            >
+              Sim Saturday
+            </button>
+            <button
+              onClick={() => setDevDayOverride("sun")}
+              className={`rounded-xl border py-2 text-[10px] font-semibold ${devDayOverride === "sun" ? "border-slate-700 bg-slate-700 text-white" : "border-slate-300 text-slate-500"}`}
+            >
+              Sim Sunday
+            </button>
+          </div>
+        )}
+
+        {demoControls && !isSaturday && !isSunday && (
           <button
             onClick={seedDemoYesterday}
             className="w-full rounded-2xl border border-dashed border-slate-300 py-3 text-[11px] font-semibold text-slate-400"
