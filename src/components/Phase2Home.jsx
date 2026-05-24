@@ -922,7 +922,7 @@ export default function Phase2Home() {
                 </p>
               </div>
               <div className="whitespace-nowrap rounded-full border border-[#bbf7d0] bg-[#f0fdf9] px-2.5 py-1">
-                <span className="text-[12px] font-bold text-[#15803d]">{completedSummary.weeklyCompleted}/6</span>
+                <span className="text-[12px] font-bold text-[#15803d]">{completedSummary.weeklyCompleted}/5</span>
                 <span className="ml-1 text-[9px] text-[#15803d]">moves</span>
               </div>
             </div>
@@ -942,12 +942,12 @@ export default function Phase2Home() {
             <div className="mx-auto mt-3 flex w-full justify-center">
               <div className="inline-flex items-center gap-1.5 rounded-full border border-[#0db89a]/20 bg-[#0db89a]/10 px-2.5 py-1.5 text-[10px] font-bold text-[#0f766e]">
                 <span>✓</span>
-                <span className="text-center">This week, you completed {completedSummary.weeklyCompleted} of 6 moves.</span>
+                <span className="text-center">This week, you completed {completedSummary.weeklyCompleted} of 5 moves.</span>
               </div>
             </div>
 
             <div className="mt-3.5 flex justify-center gap-[5px]">
-              {Array.from({ length: 6 }).map((_, idx) => {
+              {Array.from({ length: 5 }).map((_, idx) => {
                 const isCompleted = idx < completedSummary.weeklyCompleted
                 return (
                   <span

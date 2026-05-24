@@ -29,6 +29,20 @@ const currentMonthStart = () => {
 const feedbackDismissKey = (userId, attemptId) =>
   `upcarva_phase2_feedback_dismissed_${userId || "demo"}_${attemptId}`
 
+const getGmtWeekdayBounds = () => {
+  const now = new Date()
+  const utcDay = now.getUTCDay() // 0 Sun ... 6 Sat
+  const daysSinceMonday = (utcDay + 6) % 7
+
+  const monday = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()))
+  monday.setUTCDate(monday.getUTCDate() - daysSinceMonday)
+
+  const friday = new Date(monday)
+  friday.setUTCDate(friday.getUTCDate() + 4)
+
+  return { monday, friday }
+}
+
 export function usePhase2Moves({ userId, enabled }) {
   const [loading, setLoading] = useState(true)
   const [userMoves, setUserMoves] = useState([])
@@ -308,15 +322,14 @@ export function usePhase2Moves({ userId, enabled }) {
   }, [attempts])
 
   const completedSummary = useMemo(() => {
-    const now = new Date()
-    const weekAgo = new Date(now)
-    weekAgo.setDate(now.getDate() - 7)
+    const { monday, friday } = getGmtWeekdayBounds()
 
     const completedMoves = userMoves.filter((move) => move.status === "completed")
     const completedThisWeek = completedMoves.filter((move) => {
       if (!move.updated_at) return false
       const updatedAt = new Date(move.updated_at)
-      return !Number.isNaN(updatedAt.getTime()) && updatedAt >= weekAgo
+      if (Number.isNaN(updatedAt.getTime())) return false
+      return updatedAt >= monday && updatedAt <= friday
     }).length
 
     return {
