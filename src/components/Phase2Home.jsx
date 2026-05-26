@@ -9,6 +9,7 @@ import { useTodayMeals } from "../hooks/useTodayMeals"
 import { supabase } from "../lib/supabase"
 
 const serifStyle = { fontFamily: "'Instrument Serif', serif" }
+const FEEDBACK_DEBUG_USER = "09344dac-02dd-404a-8f9f-a6e14d2cef3e"
 
 function MoveCard({ move, acknowledged, onGotIt, onSwap }) {
   const initialMount = useRef(true)
@@ -322,17 +323,24 @@ function FeedbackPopup({ attempt, weekCompleted, totalCompletedBase, onSubmit, o
   const [partlyReason, setPartlyReason] = useState("")
   const [celebrationStatus, setCelebrationStatus] = useState(null)
   const [isFirstEverCompletion, setIsFirstEverCompletion] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
 
   const handleResponse = (status) => {
+    if (submitting) return
     setSelectedStatus(status)
 
     if (status !== "partly") {
       window.setTimeout(async () => {
+        setSubmitting(true)
+        console.log("[P2DBG] submit:start", { status, attemptId: attempt?.id })
         const ok = await onSubmit(status)
+        console.log("[P2DBG] submit:end", { status, attemptId: attempt?.id, ok })
         if (ok) {
           setIsFirstEverCompletion(status === "did_it" && totalCompletedBase === 0)
           setCelebrationStatus(status)
+          console.log("[P2DBG] celebration:set", { status, attemptId: attempt?.id })
         }
+        setSubmitting(false)
       }, 240)
     }
   }
@@ -410,11 +418,17 @@ function FeedbackPopup({ attempt, weekCompleted, totalCompletedBase, onSubmit, o
               <div className="mt-2 grid grid-cols-[1fr_auto] gap-2">
                 <button
                   onClick={async () => {
+                    if (submitting) return
+                    setSubmitting(true)
+                    console.log("[P2DBG] submit:start", { status: "partly", attemptId: attempt?.id, withReason: true })
                     const ok = await onSubmit("partly", partlyReason.trim() || null)
+                    console.log("[P2DBG] submit:end", { status: "partly", attemptId: attempt?.id, ok })
                     if (ok) {
                       setIsFirstEverCompletion(false)
                       setCelebrationStatus("partly")
+                      console.log("[P2DBG] celebration:set", { status: "partly", attemptId: attempt?.id })
                     }
+                    setSubmitting(false)
                   }}
                   className="rounded-xl bg-[#f59e0b] px-4 py-2.5 text-[12px] font-bold text-white"
                 >
@@ -422,11 +436,17 @@ function FeedbackPopup({ attempt, weekCompleted, totalCompletedBase, onSubmit, o
                 </button>
                 <button
                   onClick={async () => {
+                    if (submitting) return
+                    setSubmitting(true)
+                    console.log("[P2DBG] submit:start", { status: "partly", attemptId: attempt?.id, withReason: false })
                     const ok = await onSubmit("partly")
+                    console.log("[P2DBG] submit:end", { status: "partly", attemptId: attempt?.id, ok })
                     if (ok) {
                       setIsFirstEverCompletion(false)
                       setCelebrationStatus("partly")
+                      console.log("[P2DBG] celebration:set", { status: "partly", attemptId: attempt?.id })
                     }
+                    setSubmitting(false)
                   }}
                   className="rounded-xl border border-[#e8e6e1] px-3 py-2.5 text-[12px] font-semibold text-[#8a8a9a]"
                 >
@@ -450,6 +470,7 @@ function FeedbackPopup({ attempt, weekCompleted, totalCompletedBase, onSubmit, o
             weekCompleted={weekCompleted}
             isFirstEverCompletion={isFirstEverCompletion}
             onClose={() => {
+              console.log("[P2DBG] celebration:close", { status: celebrationStatus, attemptId: attempt?.id })
               setCelebrationStatus(null)
               setIsFirstEverCompletion(false)
               onSkip()
@@ -771,6 +792,27 @@ export default function Phase2Home() {
   }
 
   const isHydrated = !loading
+  const debugFeedbackUser = profile?.auth_id === FEEDBACK_DEBUG_USER
+
+  useEffect(() => {
+    if (!debugFeedbackUser) return
+    console.log("[P2DBG] gate", {
+      userId: profile?.auth_id,
+      isHydrated,
+      shouldAskYesterday,
+      feedbackSessionOpen,
+      yesterdayAttemptId: yesterdayAttempt?.id,
+      yesterdayStatus: yesterdayAttempt?.completion_status
+    })
+  }, [
+    debugFeedbackUser,
+    profile?.auth_id,
+    isHydrated,
+    shouldAskYesterday,
+    feedbackSessionOpen,
+    yesterdayAttempt?.id,
+    yesterdayAttempt?.completion_status
+  ])
 
   useEffect(() => {
     if (isHydrated && shouldAskYesterday) {
