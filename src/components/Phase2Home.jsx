@@ -325,6 +325,21 @@ function FeedbackPopup({ attempt, weekCompleted, totalCompletedBase, onSubmit, o
   const [isFirstEverCompletion, setIsFirstEverCompletion] = useState(false)
   const [submitting, setSubmitting] = useState(false)
 
+  const closeFeedbackFlow = () => {
+    console.log("[P2DBG] celebration:close", { status: celebrationStatus, attemptId: attempt?.id })
+    setCelebrationStatus(null)
+    setIsFirstEverCompletion(false)
+    onSkip()
+  }
+
+  useEffect(() => {
+    if (!celebrationStatus) return
+    const timeout = window.setTimeout(() => {
+      closeFeedbackFlow()
+    }, 4500)
+    return () => window.clearTimeout(timeout)
+  }, [celebrationStatus])
+
   const handleResponse = (status) => {
     if (submitting) return
     setSelectedStatus(status)
@@ -469,12 +484,7 @@ function FeedbackPopup({ attempt, weekCompleted, totalCompletedBase, onSubmit, o
             move={attempt}
             weekCompleted={weekCompleted}
             isFirstEverCompletion={isFirstEverCompletion}
-            onClose={() => {
-              console.log("[P2DBG] celebration:close", { status: celebrationStatus, attemptId: attempt?.id })
-              setCelebrationStatus(null)
-              setIsFirstEverCompletion(false)
-              onSkip()
-            }}
+            onClose={closeFeedbackFlow}
           />
         )}
       </AnimatePresence>
@@ -1189,7 +1199,7 @@ export default function Phase2Home() {
       </div>
 
       <AnimatePresence>
-        {isHydrated && (shouldAskYesterday || feedbackSessionOpen) && (  
+        {(shouldAskYesterday || feedbackSessionOpen) && (  
           <FeedbackPopup
             attempt={yesterdayAttempt}
             weekCompleted={completedSummary.weeklyCompleted}
