@@ -332,14 +332,6 @@ function FeedbackPopup({ attempt, weekCompleted, totalCompletedBase, onSubmit, o
     onSkip()
   }
 
-  useEffect(() => {
-    if (!celebrationStatus) return
-    const timeout = window.setTimeout(() => {
-      closeFeedbackFlow()
-    }, 4500)
-    return () => window.clearTimeout(timeout)
-  }, [celebrationStatus])
-
   const handleResponse = (status) => {
     if (submitting) return
     setSelectedStatus(status)
