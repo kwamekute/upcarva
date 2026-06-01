@@ -866,7 +866,7 @@ export default function Phase2Home() {
                     className="font-semibold"
                     style={{ background: "var(--grad)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}
                   >
-                    building momentum
+                    building your own playbook.
                   </span>{" "}
                   <motion.span
                     animate={{ scale: [1, 1.16, 1], rotate: [0, 8, -5, 0] }}
