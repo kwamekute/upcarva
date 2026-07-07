@@ -866,7 +866,7 @@ export default function Phase2Home() {
                     className="font-semibold"
                     style={{ background: "var(--grad)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}
                   >
-                    when life got busy. build from where we left of!
+                    when life got busy. Let's build from where we got to!
                   </span>{" "}
                   <motion.span
                     animate={{ scale: [1, 1.16, 1], rotate: [0, 8, -5, 0] }}
