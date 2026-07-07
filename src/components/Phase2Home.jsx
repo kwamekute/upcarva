@@ -853,7 +853,7 @@ export default function Phase2Home() {
               </span>
               <div className="mt-2">
                 <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">
-                  Calibration
+                  Calibration, welcome back!
                 </p>
                 <motion.p
                   initial={{ opacity: 0, y: 4 }}
@@ -861,12 +861,12 @@ export default function Phase2Home() {
                   transition={{ duration: 0.28, ease: "easeOut", delay: 0.05 }}
                   className="mt-1 text-[11px] leading-relaxed text-slate-500"
                 >
-                  {firstName ? `${firstName}, you're ` : "You're "}
+                  {firstName ? `You've already made progress ${firstName}, even ` : "even "}
                   <span
                     className="font-semibold"
                     style={{ background: "var(--grad)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}
                   >
-                    building your own playbook.
+                    when life got busy. build from where we left of!
                   </span>{" "}
                   <motion.span
                     animate={{ scale: [1, 1.16, 1], rotate: [0, 8, -5, 0] }}
